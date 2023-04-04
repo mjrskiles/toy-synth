@@ -10,7 +10,6 @@ class PyAudioSamplePlayer(player.SamplePlayer):
         self.pyaudio_interface = pyaudio.PyAudio()
         self.stream = None
 
-
     def load(self, sample):
         self.sample = sample
 
@@ -19,13 +18,18 @@ class PyAudioSamplePlayer(player.SamplePlayer):
             print("[play] sample was None!")
             return
 
+        def audio_callback(in_data, frame_count, time_info, status):
+            data = self.sample[:frame_count].tobytes()
+            return (data, pyaudio.paContinue)
+
         if self.stream is None:
             self.stream = self.pyaudio_interface.open(format = pyaudio.paFloat32,
-                                            channels = 1,
-                                            rate = self.sample_rate,
-                                            output = True)
+                                                        channels = 1,
+                                                        rate = self.sample_rate,
+                                                        output = True,
+                                                        stream_callback=audio_callback)
 
-        self.stream.write(self.sample.tobytes())
+        self.stream.start_stream()
         
 
     def stop(self):

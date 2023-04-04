@@ -7,11 +7,10 @@ class SquareWaveOscillator(osc.Oscillator):
         super().__init__()
         self._type = "Square"
         self._sample_rate = 44100 # hertz
-        self._duration = 1.0 # seconds
+        self._cycles_per_sample = 10 # The number of times to repeat the sample in the buffer
         self._frequency = 440.0 # hertz
-        self._amplitude = 1.0
-        self.buffer_length = int(self._sample_rate * self._duration)
-        self.buffer = np.zeros(self.buffer_length) # initialize an empty buffer
+        self._amplitude = 0.05
+        self.buffer = np.zeros(1) # initialize an empty buffer
     
     @property
     def sample_rate(self):
@@ -27,15 +26,19 @@ class SquareWaveOscillator(osc.Oscillator):
             print(f"{__name__}: [sample_rate] unable to set with value {value}")
 
     @property
-    def duration(self):
-        """The length in seconds of the sample to be generated"""
-        return self._duration
+    def cycles_per_sample(self):
+        """
+        The number of times to repeat the sample in the buffer
+        This should limit the CPU usage by preventing the pyaudio callback from 
+        being triggered once per wave cycle
+        """
+        return self._cycles_per_sample
 
-    @duration.setter
-    def duration(self, value):
+    @cycles_per_sample.setter
+    def cycles_per_sample(self, value):
         try:
             float_value = float(value)
-            self._duration = float_value
+            self._cycles_per_sample = float_value
         except:
             print(f"{__name__}: [duration] unable to set with value {value}")
 
@@ -69,7 +72,7 @@ class SquareWaveOscillator(osc.Oscillator):
             print(f"{__name__}: [amplitude] unable to set with value {value}")
         
     def generate_sample(self):
-        t = np.linspace(0, self.duration, self.buffer_length, endpoint=False)
-        square_wave = np.sign(np.sin(2 * np.pi * self.frequency * t)) * self.amplitude
+        slices_per_cycle = int(self.sample_rate / self.frequency)
+        square_wave = np.hstack([np.ones(slices_per_cycle // 2) * self.amplitude, np.ones(slices_per_cycle // 2) * -self.amplitude])
+        square_wave = np.tile(square_wave, self.cycles_per_sample)
         return square_wave.astype(np.float32)
-    
