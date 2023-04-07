@@ -10,8 +10,9 @@ if __name__ == "__main__":
 
     sample_rate = int(settings.data['synthesis']['sample_rate'])
     sample_buffer_target_size = int(settings.data['synthesis']['sample_buffer_target_size'])
+    frames_per_buffer = int(settings.data['synthesis']['frames_per_buffer'])
     oscillator = osc.SquareWaveOscillator(sample_rate, sample_buffer_target_size)
-    sample_player = player.PyAudioSamplePlayer(sample_rate)
+    sample_player = player.PyAudioSamplePlayer(sample_rate, frames_per_buffer)
 
     sample = oscillator.generate_sample()
     # print(f"sample: {sample}")

@@ -4,10 +4,11 @@ import numpy as np
 import synth.sample_player.sample_player as player
 
 class PyAudioSamplePlayer(player.SamplePlayer):
-    def __init__(self, sample_rate):
+    def __init__(self, sample_rate, frames_per_buffer):
         super().__init__()
         self.sample = None
         self.sample_rate = sample_rate
+        self.frames_per_buffer = frames_per_buffer
         self.pyaudio_interface = pyaudio.PyAudio()
         self.stream = None
         self.generator = None
@@ -48,7 +49,8 @@ class PyAudioSamplePlayer(player.SamplePlayer):
                                                         channels = 1,
                                                         rate = self.sample_rate,
                                                         output = True,
-                                                        stream_callback=audio_callback)
+                                                        stream_callback=audio_callback,
+                                                        frames_per_buffer=self.frames_per_buffer)
 
         self.stream.start_stream()
         
