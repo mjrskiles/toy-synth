@@ -1,11 +1,39 @@
 ## Environment Setup
 
-pip3 install virtualenv
+### Windows
 
-virtualenv venv
+clone the repository
 
-brew install portaudio  --mac only?
+make sure you have python 3.8 or higher installed
 
+```pip3 install virtualenv```
+
+cd into the project directory wherever you cloned it
+
+```python -m virtualenv venv```
+
+NOTE: You may have to run your PowerShell as administrator and run
+
+```Set-ExecutionPolicy -ExecutionPolicy Unrestricted```
+
+for the virtual environment activate command to work.
+
+```.\venv\Scripts\activate```
+
+```python -m pip install pyaudio```
+
+```python -m pip install -r windows.txt```
+
+### Mac
+
+brew install portaudio
+
+
+## Running
+
+You have to be in the src directory
+
+```python main.py```
 
 # Architecture
 
