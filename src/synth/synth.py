@@ -1,6 +1,25 @@
-class Synth:
+import threading
+from time import sleep
 
-    def __init__(self):
-        self.frequency = 440.0
-        self.volume = 0.05
-        
+from synth.oscillator.square_wave_oscillator import SquareWaveOscillator
+from synth.sample_player.pyaudio_sample_player import PyAudioSamplePlayer
+
+class Synth(threading.Thread):
+    def __init__(self, sample_rate, sample_buffer_target_size, frames_per_buffer):
+        super().__init__()
+        self.sample_rate = sample_rate
+        self.sample_buffer_target_size = sample_buffer_target_size
+        self.frames_per_buffer = frames_per_buffer
+        self.oscillator = SquareWaveOscillator(self.sample_rate, self.sample_buffer_target_size)
+        self.sample_player = PyAudioSamplePlayer(self.sample_rate, self.frames_per_buffer)
+        self.sample = self.oscillator.generate_sample()
+        self.sample_player.load(self.sample)
+
+    def run(self):
+        self.sample_player.play()
+        while self.sample_player.stream.is_active():
+            sleep(0.1)
+        self.sample_player.stop()
+
+
+mysynth = Synth(44100, 4096, 64)
