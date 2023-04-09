@@ -8,6 +8,9 @@ class SquareWaveOscillator(osc.Oscillator):
         self._type = "Square"
         
     def generate_sample(self):
+        if self.frequency <= 0.0:
+            return np.zeros(self.sample_buffer_target_size).astype(np.float32)
+
         # Determine how many slices make up one cycle of the wave
         slices_per_cycle = int(self.sample_rate / self.frequency)
         # print(f"sample_rate = {self.sample_rate}")

@@ -3,7 +3,8 @@ class Oscillator:
         self._type = None
         self._sample_rate = sample_rate
         self._sample_buffer_target_size = sample_buffer_target_size
-        self._frequency = 220.0 # hertz
+        self._frequency = 0.0 # hertz
+        self._phase = 0.0
         self._amplitude = 1.0
 
     @property
@@ -49,6 +50,19 @@ class Oscillator:
             self._frequency = float_value
         except:
             print(f"{__name__}: [frequency] unable to set with value {value}")
+
+    @property
+    def phase(self):
+        """The phase offset of the wave"""
+        return self._phase
+    
+    @phase.setter
+    def phase(self, value):
+        try:
+            float_value = float(value)
+            self._phase = float_value
+        except:
+            print(f"{__name__}: [phase] unable to set with value {value}")
 
     @property
     def amplitude(self):

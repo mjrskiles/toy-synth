@@ -24,6 +24,10 @@ class Synth(threading.Thread):
                 match command.split():
                     case ["note_on", "-f", freq]:
                         self.set_frequency(freq)
+                    case ["note_off"]:
+                        self.set_frequency(0.0)
+                    case _:
+                        print(f"{__name__}: [run] failed to match command")
             sleep(0.1)
         self.sample_player.stop()
 

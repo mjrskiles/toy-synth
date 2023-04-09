@@ -12,7 +12,6 @@ paho-mqtt==1.6.1
 platformdirs==3.2.0
 PyAudio==0.2.13
 pylint==2.17.2
-pynput==1.7.6
 pyobjc==9.0.1
 pyobjc-core==9.0.1
 pyobjc-framework-Accessibility==9.0.1
