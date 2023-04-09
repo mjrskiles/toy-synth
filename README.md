@@ -2,6 +2,12 @@
 
 ### Windows
 
+You must have Eclipse mosquitto installed!
+
+Go to https://mosquitto.org/download/ and download the latest version of mosquitto
+
+Right click the installer and run as administrator
+
 clone the repository
 
 make sure you have python 3.8 or higher installed
@@ -20,8 +26,6 @@ for the virtual environment activate command to work.
 
 ```.\venv\Scripts\activate```
 
-```python -m pip install pyaudio```
-
 ```python -m pip install -r windows.txt```
 
 ### Mac
@@ -31,9 +35,26 @@ brew install portaudio
 
 ## Running
 
-You have to be in the src directory
+### Windows
 
-```python main.py```
+Make sure moquitto is running:
+
+cd into 'C:\Program Files\mosquitto' in a new PowerShell window
+
+```.\mosquitto.exe```
+
+Then in another PowerShell window:
+
+cd into your project directory
+
+```python src/main.py```
+
+To publish a message
+---
+
+From the 'C:\Program Files\mosquitto' dir:
+
+```.\mosquitto_pub -t "synth/test" -m "<your message>"```
 
 # Architecture
 
