@@ -1,5 +1,10 @@
-import paho.mqtt.client as mqtt
 import threading
+import time
+from datetime import datetime
+import sys
+
+import paho.mqtt.client as mqtt
+
 
 class MQTTListener(threading.Thread):
     def __init__(self, host, port, topics, mailboxes):
@@ -33,6 +38,14 @@ class MQTTListener(threading.Thread):
         """
         return self._mailboxes
 
+    def match_topic(self, topic):
+        """
+        The main handler function.
+        Matches a topic and returns a mailbox
+        """
+        pass
+
+
     def on_connect(self, client, userdata, flags, rc):
         """
         callback for the MQTT client to execute on connect
@@ -46,8 +59,42 @@ class MQTTListener(threading.Thread):
         callback for the MQTT client on message
         The main message handler.
         """
+        topic = str(msg.topic)
+        print(f"{__name__}: [on_message] Topic: {topic}")
+        match topic:
+            case "toy/synth/exit":
+                print(f"{__name__}: [on_message] Shutting down client.")
+                self.exit(client)
+            case "toy/synth/test":
+                MQTTListener.print_message(msg)
+            case "toy/synth/test/frequency":
+                if topic in self.mailboxes:
+                    self.mailboxes[topic].put(MQTTListener.decode_payload(msg))
+            case _:
+                print(f"{__name__}: [on_message] Matched default case.")
+                MQTTListener.print_message(msg)
+
+    @staticmethod
+    def decode_payload(msg):
+        return str(msg.payload.decode("utf-8"))
+
+    @staticmethod
+    def print_message(msg):
+        """
+        message should have topic and payload
+        """
         decoded_message = str(msg.payload.decode("utf-8"))
-        print(f"{__name__}: {msg.topic}\n{decoded_message}")
+        ts = time.time()
+        time_str = datetime.fromtimestamp(ts)
+        print(f"{__name__} - {time_str}:\nTopic: {msg.topic}\nPayload: {decoded_message}")
+
+    def exit(self, client):
+        """
+        Close the MQTT client and exit the program
+        """
+        client.disconnect()
+        client.loop_stop()
+        sys.exit(0)
 
     def run(self):
         """
@@ -62,4 +109,4 @@ class MQTTListener(threading.Thread):
 
         client.connect(self.host, self.port, 60)
 
-        client.loop_forever()
+        client.loop_start()

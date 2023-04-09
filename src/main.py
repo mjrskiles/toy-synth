@@ -1,5 +1,6 @@
 from time import sleep
 import os
+import queue
 
 import synth
 import configuration.settings_reader as sr
@@ -13,19 +14,27 @@ if __name__ == "__main__":
     settings = sr.SettingsReader()
     settings.read(full_settings_path)
 
+    # Set up the command queues
+    synth_queue = communication.Mailbox()
+
     # Set up the Synth
     sample_rate = int(settings.data['synthesis']['sample_rate'])
     sample_buffer_target_size = int(settings.data['synthesis']['sample_buffer_target_size'])
     frames_per_buffer = int(settings.data['synthesis']['frames_per_buffer'])
 
-    toy_synth = synth.Synth(sample_rate, sample_buffer_target_size, frames_per_buffer)
+    toy_synth = synth.Synth(synth_queue, sample_rate, sample_buffer_target_size, frames_per_buffer)
     toy_synth.start()
     
     # Open the MQTT listener
     mqtt_host = settings.data['mqtt']['host']
     mqtt_port = int(settings.data['mqtt']['port'])
 
-    mqtt_listener = communication.MQTTListener(mqtt_host, mqtt_port, ["synth/test"], {"synth/test": {}})
+    topics = [
+        "toy/synth/test", 
+        "toy/synth/exit", 
+        "toy/synth/test/frequency"
+        ]
+    mqtt_listener = communication.MQTTListener(mqtt_host, mqtt_port, topics, {"toy/synth/test/frequency": synth_queue})
     mqtt_listener.start()
 
     mqtt_listener.join()

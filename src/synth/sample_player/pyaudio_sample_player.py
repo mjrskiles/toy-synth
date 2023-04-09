@@ -16,15 +16,15 @@ class PyAudioSamplePlayer(player.SamplePlayer):
     def load(self, sample):
         self.sample = sample
 
-    def stream_generator(self, sample, frame_count):
+    def stream_generator(self, frame_count):
         sample_index = 0
         rollover_count = 0
         while True:
             # print(f"{__name__}: 1 sample_index={sample_index}")
-            sample_frames = sample[sample_index:(sample_index + frame_count)]
+            sample_frames = self.sample[sample_index:(sample_index + frame_count)]
             if (n := len(sample_frames)) < frame_count:
                 rollover_count = frame_count - n
-                sample_frames = np.hstack([sample_frames, sample[:rollover_count]])
+                sample_frames = np.hstack([sample_frames, self.sample[:rollover_count]])
             else:
                 rollover_count = 0
             yield sample_frames
@@ -40,7 +40,7 @@ class PyAudioSamplePlayer(player.SamplePlayer):
 
         def audio_callback(in_data, frame_count, time_info, status):
             if self.generator is None:
-                self.generator = self.stream_generator(self.sample, frame_count)
+                self.generator = self.stream_generator(frame_count)
             data = next(self.generator).tobytes()
             return (data, pyaudio.paContinue)
 
