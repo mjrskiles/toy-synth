@@ -1,5 +1,8 @@
+import logging
+
 class Oscillator:
     def __init__(self, sample_rate, sample_buffer_target_size):
+        self.log = logging.getLogger(__name__)
         self._type = None
         self._sample_rate = sample_rate
         self._sample_buffer_target_size = sample_buffer_target_size
@@ -23,7 +26,7 @@ class Oscillator:
             int_value = int(value)
             self._sample_rate = int_value
         except ValueError:
-            print(f"{__name__}: [sample_rate] unable to set with value {value}")
+            self.log.error(f"{__name__}: [sample_rate] unable to set with value {value}")
     
     @property
     def sample_buffer_target_size(self):
@@ -36,7 +39,7 @@ class Oscillator:
             int_value = int(value)
             self._sample_buffer_target_size = int_value
         except ValueError:
-            print(f"{__name__}: [sample_buffer_target_size] unable to set with value {value}")
+            self.log.error(f"{__name__}: [sample_buffer_target_size] unable to set with value {value}")
 
     @property
     def frequency(self):
@@ -49,7 +52,7 @@ class Oscillator:
             float_value = float(value)
             self._frequency = float_value
         except:
-            print(f"{__name__}: [frequency] unable to set with value {value}")
+            self.log.error(f"{__name__}: [frequency] unable to set with value {value}")
 
     @property
     def phase(self):
@@ -62,7 +65,7 @@ class Oscillator:
             float_value = float(value)
             self._phase = float_value
         except:
-            print(f"{__name__}: [phase] unable to set with value {value}")
+            self.log.error(f"{__name__}: [phase] unable to set with value {value}")
 
     @property
     def amplitude(self):
@@ -78,8 +81,8 @@ class Oscillator:
             else:
                 raise ValueError
         except:
-            print(f"{__name__}: [amplitude] unable to set with value {value}")
+            self.log.error(f"{__name__}: [amplitude] unable to set with value {value}")
         
     def generate_sample(self):
-        print(f"{__name__}: [generate_sample] Tried to use the oscillator base class!")
+        self.log.error(f"{__name__}: [generate_sample] Tried to use the oscillator base class!")
     

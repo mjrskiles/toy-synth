@@ -1,12 +1,15 @@
+import logging
+
 class SamplePlayer:
     def __init__(self):
         self.type = None
+        self.log = logging.getLogger(__name__)
     
     def load(self, sample):
-        print("[load] attempted to use base class!")
+        self.log.error(f"{__name__}: [load] attempted to use base class!")
 
     def play(self):
-        print("[play] attempted to use base class!")
+        self.log.error(f"{__name__}: [play] attempted to use base class!")
 
     def stop(self):
-        print("[stop] attempted to use base class!")
+        self.log.error(f"{__name__}: [stop] attempted to use base class!")

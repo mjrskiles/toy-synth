@@ -1,7 +1,7 @@
 import threading
 import time
 from datetime import datetime
-import sys
+import logging
 
 import paho.mqtt.client as mqtt
 
@@ -9,6 +9,7 @@ import paho.mqtt.client as mqtt
 class MQTTListener(threading.Thread):
     def __init__(self, host, port, topics, mailboxes):
         super().__init__()
+        self.log = logging.getLogger(__name__)
         self.client = None
         self._host = host
         self._port = port
@@ -61,33 +62,32 @@ class MQTTListener(threading.Thread):
         The main message handler.
         """
         topic = str(msg.topic)
-        print(f"{__name__}: [on_message] Topic: {topic}")
+        self.log.debug(f"{__name__}: [on_message] Topic: {topic}")
         match topic:
             case "toy/exit":
-                print(f"{__name__}: [on_message] Shutting down MQTT client.")
+                self.log.info(f"{__name__}: [on_message] Shutting down MQTT client.")
                 self.stop()
             case "toy/log":
-                MQTTListener.print_message(msg)
+                self.log_message(msg)
             case "toy/synth/test/command":
                 if topic in self.mailboxes:
                     self.mailboxes[topic].put(MQTTListener.decode_payload(msg))
             case _:
-                print(f"{__name__}: [on_message] Matched default case.")
-                MQTTListener.print_message(msg)
+                self.log.debug(f"{__name__}: [on_message] Matched default case.")
+                self.log_message(msg)
 
     @staticmethod
     def decode_payload(msg):
         return str(msg.payload.decode("utf-8"))
 
-    @staticmethod
-    def print_message(msg):
+    def log_message(self, msg):
         """
         message should have topic and payload
         """
         decoded_message = str(msg.payload.decode("utf-8"))
         ts = time.time()
         time_str = datetime.fromtimestamp(ts)
-        print(f"{__name__} - {time_str}:\nTopic: {msg.topic}\nPayload: {decoded_message}")
+        self.log.info(f"{__name__} - {time_str}:\nTopic: {msg.topic}\nPayload: {decoded_message}")
 
     def stop(self):
         """
@@ -100,7 +100,7 @@ class MQTTListener(threading.Thread):
         """
         Overrides threading.Thread.run
         """
-        print(f"{__name__}: [run] Initiating MQTT listener with host: {self.host}, port: {self.port}")
+        self.log.info(f"{__name__}: [run] Initiating MQTT listener with host: {self.host}, port: {self.port}")
 
         self.client = mqtt.Client()
         self.client.user_data_set({'topics': self.topics})

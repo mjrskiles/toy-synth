@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 
 import synth.oscillator.oscillator as osc
@@ -6,6 +8,7 @@ class SquareWaveOscillator(osc.Oscillator):
     def __init__(self, sample_rate, sample_buffer_target_size):
         super().__init__(sample_rate, sample_buffer_target_size)
         self._type = "Square"
+        self.log = logging.getLogger(__name__)
         
     def generate_sample(self):
         if self.frequency <= 0.0:

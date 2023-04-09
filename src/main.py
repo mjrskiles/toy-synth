@@ -1,12 +1,13 @@
 from time import sleep
 import os
-import queue
-import sys
-import signal
+import logging
 
 import synth
 import configuration.settings_reader as sr
 import communication
+
+log = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG, format='%(message)s')
 
 if __name__ == "__main__":
     # Fetch static data from settings.ini
