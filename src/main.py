@@ -31,11 +31,11 @@ if __name__ == "__main__":
     mqtt_port = int(settings.data['mqtt']['port'])
 
     topics = [
-        "toy/synth/exit",
-        "toy/synth/test",  
-        "toy/synth/test/frequency"
+        "toy/exit",
+        "toy/log",  
+        "toy/synth/test/command"
         ]
-    mqtt_listener = communication.MQTTListener(mqtt_host, mqtt_port, topics, {"toy/synth/test/frequency": synth_queue})
+    mqtt_listener = communication.MQTTListener(mqtt_host, mqtt_port, topics, {"toy/synth/test/command": synth_queue})
 
     # Start the threads
     toy_synth.start()

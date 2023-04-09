@@ -63,12 +63,12 @@ class MQTTListener(threading.Thread):
         topic = str(msg.topic)
         print(f"{__name__}: [on_message] Topic: {topic}")
         match topic:
-            case "toy/synth/exit":
+            case "toy/exit":
                 print(f"{__name__}: [on_message] Shutting down MQTT client.")
                 self.stop()
-            case "toy/synth/test":
+            case "toy/log":
                 MQTTListener.print_message(msg)
-            case "toy/synth/test/frequency":
+            case "toy/synth/test/command":
                 if topic in self.mailboxes:
                     self.mailboxes[topic].put(MQTTListener.decode_payload(msg))
             case _:

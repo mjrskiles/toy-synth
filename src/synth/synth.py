@@ -20,17 +20,22 @@ class Synth(threading.Thread):
         self.sample_player.play()
         while self.sample_player.stream.is_active():
             if command := self.command_queue.get():
-                print(f"{__name__}: [run] Got command!")
-                try:
-                    parsed_float = float(command)
-                    self.oscillator.frequency = parsed_float
-                    self.sample = self.oscillator.generate_sample()
-                    self.sample_player.load(self.sample)
-                except:
-                    print(f"{__name__}: [run] Couldn't parse float")
+                print(f"{__name__}: [run] Got command: {command}")
+                match command.split():
+                    case ["note_on", "-f", freq]:
+                        self.set_frequency(freq)
             sleep(0.1)
         self.sample_player.stop()
 
     def stop(self):
         self.sample_player.stop()
-        
+
+    def set_frequency(self, frequency):
+        try:
+            parsed_float = float(frequency)
+            self.oscillator.frequency = parsed_float
+            self.sample = self.oscillator.generate_sample()
+            self.sample_player.load(self.sample)
+        except:
+            print(f"{__name__}: [set_frequency] Couldn't parse float")
+
