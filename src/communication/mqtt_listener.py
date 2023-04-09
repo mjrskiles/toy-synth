@@ -9,6 +9,7 @@ import paho.mqtt.client as mqtt
 class MQTTListener(threading.Thread):
     def __init__(self, host, port, topics, mailboxes):
         super().__init__()
+        self.client = None
         self._host = host
         self._port = port
         self._topics = topics
@@ -63,8 +64,8 @@ class MQTTListener(threading.Thread):
         print(f"{__name__}: [on_message] Topic: {topic}")
         match topic:
             case "toy/synth/exit":
-                print(f"{__name__}: [on_message] Shutting down client.")
-                self.exit(client)
+                print(f"{__name__}: [on_message] Shutting down MQTT client.")
+                self.stop()
             case "toy/synth/test":
                 MQTTListener.print_message(msg)
             case "toy/synth/test/frequency":
@@ -88,13 +89,12 @@ class MQTTListener(threading.Thread):
         time_str = datetime.fromtimestamp(ts)
         print(f"{__name__} - {time_str}:\nTopic: {msg.topic}\nPayload: {decoded_message}")
 
-    def exit(self, client):
+    def stop(self):
         """
         Close the MQTT client and exit the program
         """
-        client.disconnect()
-        client.loop_stop()
-        sys.exit(0)
+        self.client.disconnect()
+        self.client.loop_stop()
 
     def run(self):
         """
@@ -102,11 +102,11 @@ class MQTTListener(threading.Thread):
         """
         print(f"{__name__}: [run] Initiating MQTT listener with host: {self.host}, port: {self.port}")
 
-        client = mqtt.Client()
-        client.user_data_set({'topics': self.topics})
-        client.on_connect = self.on_connect
-        client.on_message = self.on_message
+        self.client = mqtt.Client()
+        self.client.user_data_set({'topics': self.topics})
+        self.client.on_connect = self.on_connect
+        self.client.on_message = self.on_message
 
-        client.connect(self.host, self.port, 60)
+        self.client.connect(self.host, self.port, 60)
 
-        client.loop_start()
+        self.client.loop_start()

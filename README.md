@@ -98,3 +98,18 @@ What commands can the synth take?
 (command - params)
 note on - note, velocity
 note off - note
+
+## API
+
+### Topics
+
+All topics should begin with toy/
+
+toy/synth/exit
+---
+Sending anything on this topic should cause the toy synth program to exit gracefully. Not implemented yet (4/9/23)
+
+toy/synth/test
+---
+Messages sent on this topic will be printed out on the console
+

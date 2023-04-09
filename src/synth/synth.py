@@ -30,3 +30,7 @@ class Synth(threading.Thread):
                     print(f"{__name__}: [run] Couldn't parse float")
             sleep(0.1)
         self.sample_player.stop()
+
+    def stop(self):
+        self.sample_player.stop()
+        

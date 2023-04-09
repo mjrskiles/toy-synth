@@ -1,6 +1,8 @@
 from time import sleep
 import os
 import queue
+import sys
+import signal
 
 import synth
 import configuration.settings_reader as sr
@@ -23,18 +25,20 @@ if __name__ == "__main__":
     frames_per_buffer = int(settings.data['synthesis']['frames_per_buffer'])
 
     toy_synth = synth.Synth(synth_queue, sample_rate, sample_buffer_target_size, frames_per_buffer)
-    toy_synth.start()
     
     # Open the MQTT listener
     mqtt_host = settings.data['mqtt']['host']
     mqtt_port = int(settings.data['mqtt']['port'])
 
     topics = [
-        "toy/synth/test", 
-        "toy/synth/exit", 
+        "toy/synth/exit",
+        "toy/synth/test",  
         "toy/synth/test/frequency"
         ]
     mqtt_listener = communication.MQTTListener(mqtt_host, mqtt_port, topics, {"toy/synth/test/frequency": synth_queue})
+
+    # Start the threads
+    toy_synth.start()
     mqtt_listener.start()
 
     mqtt_listener.join()
