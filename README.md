@@ -10,7 +10,7 @@ Right click the installer and run as administrator
 
 clone the repository
 
-make sure you have python 3.8 or higher installed
+make sure you have python 3.10 or higher installed
 
 ```pip3 install virtualenv```
 
@@ -18,11 +18,11 @@ cd into the project directory wherever you cloned it
 
 ```python -m virtualenv venv```
 
-NOTE: You may have to run your PowerShell as administrator and run
+NOTE: For the virtual environment activate command to work, you may have to run your PowerShell as administrator and run
 
 ```Set-ExecutionPolicy -ExecutionPolicy Unrestricted```
 
-for the virtual environment activate command to work.
+then
 
 ```.\venv\Scripts\activate```
 
@@ -60,16 +60,13 @@ From the 'C:\Program Files\mosquitto' dir:
 
 ## Modules
 
-Synth
+synth
 ---
 
-Input
+communication
 ---
-- Maybe there should be a command interpreter layer before the synth that can dispatch commands to the correct modules
-    - would each command need a channel?
-    - this would be useful for handling commands like 'quit' that aren't really sound related
-    
-MIDI?
+
+configuration
 ---
 
 
