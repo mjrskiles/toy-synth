@@ -47,14 +47,18 @@ Then in another PowerShell window:
 
 cd into your project directory
 
-```python src/main.py```
+```python toysynth/main.py```
 
 To publish a message
 ---
 
 From the 'C:\Program Files\mosquitto' dir:
 
-```.\mosquitto_pub -t "synth/test" -m "<your message>"```
+```.\mosquitto_pub -t "toy/log" -m "<your message>"```
+
+```.\mosquitto_pub -t "toy/synth/test/command" -m "note_on -f 440.0"```
+
+```.\mosquitto_pub -t "toy/synth/test/command" -m "note_off"```
 
 # Architecture
 
