@@ -34,25 +34,24 @@ class PyAudioSamplePlayer(player.SamplePlayer):
             sample_index += frame_count
             if rollover_count != 0:
                 sample_index = rollover_count
-            
+
+    def audio_callback(self, in_data, frame_count, time_info, status):
+            if self.generator is None:
+                self.generator = self.stream_generator(frame_count)
+            data = next(self.generator).tobytes()
+            return (data, pyaudio.paContinue)       
 
     def play(self):
         if self.sample is None:
             print("[play] sample was None!")
             return
 
-        def audio_callback(in_data, frame_count, time_info, status):
-            if self.generator is None:
-                self.generator = self.stream_generator(frame_count)
-            data = next(self.generator).tobytes()
-            return (data, pyaudio.paContinue)
-
         if self.stream is None:
             self.stream = self.pyaudio_interface.open(format = pyaudio.paFloat32,
                                                         channels = 1,
                                                         rate = self.sample_rate,
                                                         output = True,
-                                                        stream_callback=audio_callback,
+                                                        stream_callback=self.audio_callback,
                                                         frames_per_buffer=self.frames_per_buffer)
 
         self.stream.start_stream()

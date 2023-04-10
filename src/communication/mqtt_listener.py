@@ -8,7 +8,7 @@ import paho.mqtt.client as mqtt
 
 class MQTTListener(threading.Thread):
     def __init__(self, host, port, topics, mailboxes):
-        super().__init__()
+        super().__init__(name="MQTTListener")
         self.log = logging.getLogger(__name__)
         self.client = None
         self._host = host
