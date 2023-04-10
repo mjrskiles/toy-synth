@@ -2,9 +2,9 @@ import logging
 
 import numpy as np
 
-import synthesis.oscillator.oscillator as osc
+from .oscillator import Oscillator
 
-class SquareWaveOscillator(osc.Oscillator):
+class SquareWaveOscillator(Oscillator):
     def __init__(self, sample_rate, sample_buffer_target_size):
         super().__init__(sample_rate, sample_buffer_target_size)
         self._type = "Square"

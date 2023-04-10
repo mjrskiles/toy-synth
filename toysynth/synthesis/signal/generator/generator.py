@@ -1,8 +1,8 @@
 import logging
 
-import synthesis.signal.component as component
+from . import Component
 
-class Generator(component.Component):
+class Generator(Component):
     def __init__(self, sample_rate, frames_per_buffer):
         self.log = logging.getLogger(__name__)
         self.sample_rate = int(sample_rate)

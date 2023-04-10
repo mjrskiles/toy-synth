@@ -3,9 +3,9 @@ import logging
 import pyaudio
 import numpy as np
 
-import synthesis.sample_player.sample_player as player
+from .sample_player import SamplePlayer
 
-class PyAudioSamplePlayer(player.SamplePlayer):
+class PyAudioSamplePlayer(SamplePlayer):
     def __init__(self, sample_rate, frames_per_buffer):
         super().__init__()
         self.log = logging.getLogger(__name__)

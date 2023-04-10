@@ -2,9 +2,9 @@ from time import sleep
 import os
 import logging
 
-import synthesis
-import configuration.settings_reader as sr
-import communication
+import toysynth.synthesis as synthesis
+import toysynth.configuration.settings_reader as sr
+import toysynth.communication as communication
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, 

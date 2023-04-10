@@ -2,8 +2,8 @@ import threading
 from time import sleep
 import logging
 
-from synthesis.oscillator.square_wave_oscillator import SquareWaveOscillator
-from synthesis.sample_player.pyaudio_sample_player import PyAudioSamplePlayer
+from .oscillator.square_wave_oscillator import SquareWaveOscillator
+from .sample_player.pyaudio_sample_player import PyAudioSamplePlayer
 
 class Synth(threading.Thread):
     def __init__(self, command_queue, sample_rate, sample_buffer_target_size, frames_per_buffer):

@@ -1,9 +1,9 @@
 import logging
 import numpy as np
 
-import synthesis.signal.generator as generator
+from .generator import Generator
 
-class Oscillator(generator.Generator):
+class Oscillator(Generator):
     def __init__(self, sample_rate, frames_per_buffer):
         super().__init__(sample_rate, frames_per_buffer)
         self.log = logging.getLogger(__name__)

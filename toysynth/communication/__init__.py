@@ -1,2 +1,2 @@
-from communication.mqtt_listener import MQTTListener
-from communication.mailbox import Mailbox
+from .mqtt_listener import MQTTListener
+from .mailbox import Mailbox

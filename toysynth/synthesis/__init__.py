@@ -1,1 +1,1 @@
-from synthesis.synth import Synth
+from .synth import Synth

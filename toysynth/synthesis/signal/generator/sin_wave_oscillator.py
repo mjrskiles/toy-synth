@@ -2,9 +2,9 @@ import logging
 
 import numpy as np
 
-import synthesis.signal.generator.oscillator as oscillator
+from .oscillator import Oscillator
 
-class SinWaveOscillator(oscillator.Oscillator):
+class SinWaveOscillator(Oscillator):
     def __init__(self, sample_rate, frames_per_buffer):
         super().__init__(sample_rate, frames_per_buffer)
 

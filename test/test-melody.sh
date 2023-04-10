@@ -13,7 +13,7 @@ half_len=0.2
 whole_len=0.4
 
 source ../venv/bin/activate
-(python ../toysynth/main.py)&
+(python ../toysynth/__main__.py)&
 pid=$!
 
 sleep 1
