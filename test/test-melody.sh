@@ -12,8 +12,8 @@ quarter_len=0.1
 half_len=0.2
 whole_len=0.4
 
-source ../venv/bin/activate
-(python ../toysynth/__main__.py)&
+source ./venv/bin/activate
+(python -m toysynth)&
 pid=$!
 
 sleep 1

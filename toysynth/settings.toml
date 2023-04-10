@@ -1,5 +1,4 @@
-[DEFAULT]
-app_name = toy synth
+app_name = "toy synth"
 
 [synthesis]
 sample_rate = 44100
@@ -7,5 +6,5 @@ sample_buffer_target_size = 4096
 frames_per_buffer = 64
 
 [mqtt]
-host = localhost
+host = "localhost"
 port = 1883
