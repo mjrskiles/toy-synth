@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     settings = SettingsReader()
     settings.read(full_settings_path)
-    print(str(settings))
+    log.debug(f"App Settings: {str(settings)}")
 
     # Set up the command queues
     synth_queue = Mailbox()

@@ -1,4 +1,5 @@
 import tomli
+import json # only using json lib to pretty print the resulting dict
 
 class SettingsReader:
     def __init__(self):
@@ -9,4 +10,4 @@ class SettingsReader:
             self.data = tomli.load(f)
 
     def __str__(self):
-        return str(self.data)
+        return json.dumps(self.data, indent=2, default=str)
