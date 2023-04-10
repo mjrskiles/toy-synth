@@ -62,10 +62,10 @@ class MQTTListener(threading.Thread):
         The main message handler.
         """
         topic = str(msg.topic)
-        self.log.debug(f"{__name__}: [on_message] Topic: {topic}")
+        self.log.debug(f"Topic: {topic}")
         match topic:
             case "toy/exit":
-                self.log.info(f"{__name__}: [on_message] Shutting down MQTT client.")
+                self.log.info(f"Shutting down MQTT client.")
                 self.stop()
             case "toy/log":
                 self.log_message(msg)
@@ -73,7 +73,7 @@ class MQTTListener(threading.Thread):
                 if topic in self.mailboxes:
                     self.mailboxes[topic].put(MQTTListener.decode_payload(msg))
             case _:
-                self.log.debug(f"{__name__}: [on_message] Matched default case.")
+                self.log.debug(f"Matched default case.")
                 self.log_message(msg)
 
     @staticmethod
@@ -85,9 +85,7 @@ class MQTTListener(threading.Thread):
         message should have topic and payload
         """
         decoded_message = str(msg.payload.decode("utf-8"))
-        ts = time.time()
-        time_str = datetime.fromtimestamp(ts)
-        self.log.info(f"{__name__} - {time_str}:\nTopic: {msg.topic}\nPayload: {decoded_message}")
+        self.log.info(f"Topic: {msg.topic}\nPayload: {decoded_message}")
 
     def stop(self):
         """
@@ -100,7 +98,7 @@ class MQTTListener(threading.Thread):
         """
         Overrides threading.Thread.run
         """
-        self.log.info(f"{__name__}: [run] Initiating MQTT listener with host: {self.host}, port: {self.port}")
+        self.log.info(f"Initiating MQTT listener with host: {self.host}, port: {self.port}")
 
         self.client = mqtt.Client()
         self.client.user_data_set({'topics': self.topics})

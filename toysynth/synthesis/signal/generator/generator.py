@@ -1,6 +1,6 @@
 import logging
 
-import synth.signal.component as component
+import synthesis.signal.component as component
 
 class Generator(component.Component):
     def __init__(self, sample_rate, frames_per_buffer):
@@ -19,7 +19,7 @@ class Generator(component.Component):
             int_value = int(value)
             self._sample_rate = int_value
         except ValueError:
-            self.log.error(f"{__name__}: [sample_rate] unable to set with value {value}")
+            self.log.error(f"[sample_rate] unable to set with value {value}")
 
     @property
     def frames_per_buffer(self):
@@ -32,7 +32,7 @@ class Generator(component.Component):
             int_value = int(value)
             self._frames_per_buffer = int_value
         except ValueError:
-            self.log.error(f"{__name__}: [frames_per_buffer] unable to set with value {value}")
+            self.log.error(f"unable to set with value {value}")
 
     def generate(self):
-        self.log.error(f"{__name__}: [generate] Tried to use the generator base class!")
+        self.log.error(f"Tried to use the generator base class!")

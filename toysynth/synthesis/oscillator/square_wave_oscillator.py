@@ -2,7 +2,7 @@ import logging
 
 import numpy as np
 
-import synth.oscillator.oscillator as osc
+import synthesis.oscillator.oscillator as osc
 
 class SquareWaveOscillator(osc.Oscillator):
     def __init__(self, sample_rate, sample_buffer_target_size):

@@ -1,7 +1,7 @@
 import logging
 import numpy as np
 
-import synth.signal.generator as generator
+import synthesis.signal.generator as generator
 
 class Oscillator(generator.Generator):
     def __init__(self, sample_rate, frames_per_buffer):
@@ -28,7 +28,7 @@ class Oscillator(generator.Generator):
             float_value = float(value)
             self._frequency = float_value
         except:
-            self.log.error(f"{__name__}: [frequency] unable to set with value {value}")
+            self.log.error(f"unable to set with value {value}")
 
     @property
     def phase(self):
@@ -41,14 +41,14 @@ class Oscillator(generator.Generator):
             float_value = float(value)
             self._phase = float_value
         except:
-            self.log.error(f"{__name__}: [phase] unable to set with value {value}")
+            self.log.error(f"unable to set with value {value}")
 
     def set_phase_degrees(self, degrees):
         try:
             radians = (degrees / 360) * 2 * np.pi
             self.phase = radians
         except:
-            self.log.error(f"{__name__}: [set_phase_degrees] unable to set with value {degrees}")
+            self.log.error(f"[set_phase_degrees] unable to set with value {degrees}")
 
     @property
     def amplitude(self):
@@ -64,7 +64,7 @@ class Oscillator(generator.Generator):
             else:
                 raise ValueError
         except:
-            self.log.error(f"{__name__}: [amplitude] unable to set with value {value}")
+            self.log.error(f"unable to set with value {value}")
     
     def generate(self):
-        self.log.error(f"{__name__}: [generate] Tried to use the oscillator base class!")
+        self.log.error(f"Tried to use the oscillator base class!")

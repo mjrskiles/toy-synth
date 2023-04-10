@@ -3,7 +3,7 @@ import logging
 import pyaudio
 import numpy as np
 
-import synth.sample_player.sample_player as player
+import synthesis.sample_player.sample_player as player
 
 class PyAudioSamplePlayer(player.SamplePlayer):
     def __init__(self, sample_rate, frames_per_buffer):
@@ -23,7 +23,7 @@ class PyAudioSamplePlayer(player.SamplePlayer):
         sample_index = 0
         rollover_count = 0
         while True:
-            # print(f"{__name__}: 1 sample_index={sample_index}")
+            # print(f"1 sample_index={sample_index}")
             sample_frames = self.sample[sample_index:(sample_index + frame_count)]
             if (n := len(sample_frames)) < frame_count:
                 rollover_count = frame_count - n
@@ -43,7 +43,7 @@ class PyAudioSamplePlayer(player.SamplePlayer):
 
     def play(self):
         if self.sample is None:
-            print("[play] sample was None!")
+            self.log.error("sample was None!")
             return
 
         if self.stream is None:
