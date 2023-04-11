@@ -19,7 +19,7 @@ class Generator(Component):
             int_value = int(value)
             self._sample_rate = int_value
         except ValueError:
-            self.log.error(f"[sample_rate] unable to set with value {value}")
+            self.log.error(f"unable to set with value {value}")
 
     @property
     def frames_per_buffer(self):
