@@ -23,7 +23,6 @@ class PyAudioSamplePlayer(SamplePlayer):
         sample_index = 0
         rollover_count = 0
         while True:
-            # print(f"1 sample_index={sample_index}")
             sample_frames = self.sample[sample_index:(sample_index + frame_count)]
             if (n := len(sample_frames)) < frame_count:
                 rollover_count = frame_count - n

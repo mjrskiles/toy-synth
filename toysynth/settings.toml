@@ -8,3 +8,11 @@ frames_per_buffer = 64
 [mqtt]
 host = "localhost"
 port = 1883
+
+[[mqtt.topics]]
+name = "log"
+path = "toy/log"
+
+[[mqtt.topics]]
+name = "command test"
+path = "toy/synth/test/command"

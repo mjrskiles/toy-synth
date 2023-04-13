@@ -8,7 +8,7 @@ class Oscillator(Generator):
         super().__init__(sample_rate, frames_per_buffer)
         self.log = logging.getLogger(__name__)
         self._type = "Base"
-        self.frequency = 0.0 # hertz
+        self.frequency = 440.0 # hertz
         self.phase = 0.0
         self.amplitude = 1.0
 

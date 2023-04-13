@@ -1,6 +1,6 @@
 import logging
 
-from . import Component
+from toysynth.synthesis.signal.component import Component
 
 class Generator(Component):
     def __init__(self, sample_rate, frames_per_buffer):
@@ -34,5 +34,5 @@ class Generator(Component):
         except ValueError:
             self.log.error(f"unable to set with value {value}")
 
-    def generate(self):
+    def generator(self):
         self.log.error(f"Tried to use the generator base class!")

@@ -3,7 +3,7 @@ from time import sleep
 import logging
 
 from .oscillator.square_wave_oscillator import SquareWaveOscillator
-from .sample_player.pyaudio_sample_player import PyAudioSamplePlayer
+from toysynth.playback.sample_player.pyaudio_sample_player import PyAudioSamplePlayer
 
 class Synth(threading.Thread):
     def __init__(self, command_queue, sample_rate, sample_buffer_target_size, frames_per_buffer):
@@ -43,5 +43,5 @@ class Synth(threading.Thread):
             self.sample = self.oscillator.generate_sample()
             self.sample_player.load(self.sample)
         except:
-            self.log.error(f"[set_frequency] Couldn't parse float")
+            self.log.error(f"Couldn't parse float")
 
