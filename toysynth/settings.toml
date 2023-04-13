@@ -3,7 +3,7 @@ app_name = "toy synth"
 [synthesis]
 sample_rate = 44100
 sample_buffer_target_size = 4096
-frames_per_buffer = 64
+frames_per_buffer = 128
 
 [mqtt]
 host = "localhost"

@@ -10,10 +10,10 @@ class SinWaveOscillator(Oscillator):
 
     def generator(self):
         wave = np.zeros(self.frames_per_buffer)
-        duration = self.frames_per_buffer / self.sample_rate
+        chunk_duration = self.frames_per_buffer / self.sample_rate
         chunk_start_time = 0.0
-        chunk_end_time = duration
-        self.log.debug(f"duration:\n{duration}")
+        chunk_end_time = chunk_duration
+        self.log.debug(f"duration:\n{chunk_duration}")
 
         while True:
             if self.frequency <= 0.0:
@@ -30,7 +30,7 @@ class SinWaveOscillator(Oscillator):
             yield wave.astype(np.float32)
 
             chunk_start_time = chunk_end_time
-            chunk_end_time += duration
+            chunk_end_time += chunk_duration
 
 
 
