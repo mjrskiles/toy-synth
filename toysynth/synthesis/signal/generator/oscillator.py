@@ -9,7 +9,7 @@ class Oscillator(Generator):
         self.log = logging.getLogger(__name__)
         self._type = "Base"
         self.frequency = 440.0 # hertz
-        self.phase = 0.0
+        self.phase = np.pi / 2.0
         self.amplitude = 1.0
 
     @property

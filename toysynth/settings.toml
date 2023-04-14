@@ -16,3 +16,7 @@ path = "toy/log"
 [[mqtt.topics]]
 name = "command test"
 path = "toy/synth/test/command"
+
+[[mqtt.topics]]
+name = "exit"
+path = "toy/exit"

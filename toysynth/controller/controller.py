@@ -18,13 +18,13 @@ class Controller(threading.Thread):
         self.stream_player.play()
         should_run = True
         while should_run and self.stream_player.is_active():
-            if message := self.mailbox.get():
+            # get() is a blocking call
+            if message := self.mailbox.get(): 
                 match message.split():
                     case ["exit"]:
                         self.log.debug("Got exit command.")
                         self.stream_player.stop()
                         should_run = False
-            sleep(0.1)
         return
 
     

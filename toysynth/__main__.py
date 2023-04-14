@@ -4,7 +4,6 @@ import sys
 from time import sleep
 
 from .configuration import SettingsReader
-from .synthesis import Synth
 from .communication import MQTTListener, Mailbox
 from .controller import Controller
 
@@ -24,7 +23,7 @@ if __name__ == "__main__":
     log.debug(f"App settings: {str(settings)}")
 
     # Set up the command queues
-    synth_queue = Mailbox()
+    main_mailbox = Mailbox()
     controller_mailbox = Mailbox()
 
     # Set up the Synth
@@ -32,7 +31,6 @@ if __name__ == "__main__":
     sample_buffer_target_size = int(settings.data['synthesis']['sample_buffer_target_size'])
     frames_per_buffer = int(settings.data['synthesis']['frames_per_buffer'])
 
-    # toy_synth = Synth(synth_queue, sample_rate, sample_buffer_target_size, frames_per_buffer)
     toy_synth = Controller(controller_mailbox, sample_rate, frames_per_buffer)
     
     # Open the MQTT listener
@@ -40,14 +38,18 @@ if __name__ == "__main__":
     mqtt_port = int(settings.data['mqtt']['port'])
 
     topics = [topic['path'] for topic in settings.data['mqtt']['topics']]
-    mqtt_listener = MQTTListener(mqtt_host, mqtt_port, topics, {"toy/synth/test/command": synth_queue})
+    mqtt_listener = MQTTListener(mqtt_host, mqtt_port, topics, {"toy/synth/test/command": controller_mailbox, "toy/exit": main_mailbox})
 
     try:
         # Start the threads
         toy_synth.start()
         mqtt_listener.start()
-        while True:
-            sleep(0.1)
+        should_run = True
+        while should_run:
+            if message := main_mailbox.get():
+                match message.split():
+                    case ["exit"]:
+                        should_run = False
 
     except KeyboardInterrupt:
         log.info("Caught Keyboard interrupt. Shutting down.")
