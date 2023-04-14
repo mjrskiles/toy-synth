@@ -6,12 +6,12 @@ import numpy as np
 from .sample_player import SamplePlayer
 
 class PyAudioSamplePlayer(SamplePlayer):
-    def __init__(self, sample_rate, frames_per_buffer):
+    def __init__(self, sample_rate, frames_per_chunk):
         super().__init__()
         self.log = logging.getLogger(__name__)
         self.sample = None
         self.sample_rate = sample_rate
-        self.frames_per_buffer = frames_per_buffer
+        self.frames_per_chunk = frames_per_chunk
         self.pyaudio_interface = pyaudio.PyAudio()
         self.stream = None
         self.generator = None
@@ -51,7 +51,7 @@ class PyAudioSamplePlayer(SamplePlayer):
                                                         rate = self.sample_rate,
                                                         output = True,
                                                         stream_callback=self.audio_callback,
-                                                        frames_per_buffer=self.frames_per_buffer)
+                                                        frames_per_buffer=self.frames_per_chunk)
 
         self.stream.start_stream()
         

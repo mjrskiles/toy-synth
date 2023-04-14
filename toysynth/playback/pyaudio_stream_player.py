@@ -3,8 +3,8 @@ import pyaudio
 from .stream_player import StreamPlayer
 
 class PyAudioStreamPlayer(StreamPlayer):
-    def __init__(self, sample_rate, frames_per_buffer, input_delegate):
-        super().__init__(sample_rate, frames_per_buffer, input_delegate)
+    def __init__(self, sample_rate, frames_per_chunk, input_delegate):
+        super().__init__(sample_rate, frames_per_chunk, input_delegate)
         self.pyaudio_interface = pyaudio.PyAudio()
         self._output_stream = None
 
@@ -15,7 +15,7 @@ class PyAudioStreamPlayer(StreamPlayer):
                                                         rate = self.sample_rate,
                                                         output = True,
                                                         stream_callback=self.audio_callback,
-                                                        frames_per_buffer=self.frames_per_buffer)
+                                                        frames_per_buffer=self.frames_per_chunk)
 
         self._output_stream.start_stream()
     

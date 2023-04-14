@@ -6,15 +6,15 @@ from .oscillator.square_wave_oscillator import SquareWaveOscillator
 from toysynth.playback.sample_player.pyaudio_sample_player import PyAudioSamplePlayer
 
 class Synth(threading.Thread):
-    def __init__(self, command_queue, sample_rate, sample_buffer_target_size, frames_per_buffer):
+    def __init__(self, command_queue, sample_rate, sample_buffer_target_size, frames_per_chunk):
         super().__init__()
         self.log = logging.getLogger(__name__)
         self.command_queue = command_queue
         self.sample_rate = sample_rate
         self.sample_buffer_target_size = sample_buffer_target_size
-        self.frames_per_buffer = frames_per_buffer
+        self.frames_per_chunk = frames_per_chunk
         self.oscillator = SquareWaveOscillator(self.sample_rate, self.sample_buffer_target_size)
-        self.sample_player = PyAudioSamplePlayer(self.sample_rate, self.frames_per_buffer)
+        self.sample_player = PyAudioSamplePlayer(self.sample_rate, self.frames_per_chunk)
         self.sample = self.oscillator.generate_sample()
         self.sample_player.load(self.sample)
 

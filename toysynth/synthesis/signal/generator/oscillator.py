@@ -4,11 +4,11 @@ import numpy as np
 from .generator import Generator
 
 class Oscillator(Generator):
-    def __init__(self, sample_rate, frames_per_buffer):
-        super().__init__(sample_rate, frames_per_buffer)
+    def __init__(self, sample_rate, frames_per_chunk):
+        super().__init__(sample_rate, frames_per_chunk)
         self.log = logging.getLogger(__name__)
         self._type = "Base"
-        self.frequency = 440.0 # hertz
+        self.frequency = 3.0 # hertz
         self.phase = np.pi / 2.0
         self.amplitude = 1.0
 

@@ -2,10 +2,10 @@ import logging
 import types
 
 class StreamPlayer():
-    def __init__(self, sample_rate, frames_per_buffer, input_delegate):
+    def __init__(self, sample_rate, frames_per_chunk, input_delegate):
         self.log = logging.getLogger(__name__)
         self.sample_rate = sample_rate
-        self.frames_per_buffer = frames_per_buffer
+        self.frames_per_chunk = frames_per_chunk
         self.input_delegate = input_delegate
 
     @property
@@ -23,14 +23,14 @@ class StreamPlayer():
             self.log.error(f"Could set sample_rate with value {value}")
 
     @property
-    def frames_per_buffer(self):
-        return self._frames_per_buffer
+    def frames_per_chunk(self):
+        return self._frames_per_chunk
     
-    @frames_per_buffer.setter
-    def frames_per_buffer(self, value):
+    @frames_per_chunk.setter
+    def frames_per_chunk(self, value):
         try:
             if (int_value := int(value)) > 0:
-                self._frames_per_buffer = int_value
+                self._frames_per_chunk = int_value
             else:
                 raise ValueError
         except ValueError:
@@ -40,18 +40,16 @@ class StreamPlayer():
     def input_delegate(self):
         """
         This should be a callable object which returns the BYTES of an ndarray (aka calling tobytes() on it)
-        of size <frames_per_buffer>
+        of size <frames_per_chunk>
         """
         return self._input_delegate
     
     @input_delegate.setter
     def input_delegate(self, value):
         try:
-            if isinstance(value, types.GeneratorType):
-                self._input_delegate = value
-            else:
-                raise ValueError
-        except ValueError:
+            _ = iter(value)
+            self._input_delegate = value
+        except TypeError:
             self.log.error(f"Could not set input delegate with value {value}")
 
     def play(self):

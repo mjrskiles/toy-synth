@@ -29,9 +29,9 @@ if __name__ == "__main__":
     # Set up the Synth
     sample_rate = int(settings.data['synthesis']['sample_rate'])
     sample_buffer_target_size = int(settings.data['synthesis']['sample_buffer_target_size'])
-    frames_per_buffer = int(settings.data['synthesis']['frames_per_buffer'])
+    frames_per_chunk = int(settings.data['synthesis']['frames_per_chunk'])
 
-    toy_synth = Controller(controller_mailbox, sample_rate, frames_per_buffer)
+    toy_synth = Controller(controller_mailbox, sample_rate, frames_per_chunk)
     
     # Open the MQTT listener
     mqtt_host = settings.data['mqtt']['host']
