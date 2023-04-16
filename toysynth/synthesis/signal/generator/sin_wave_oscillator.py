@@ -16,6 +16,7 @@ class SinWaveOscillator(Oscillator):
         return self
     
     def __next__(self):
+        # Generate the wave
         if self.frequency <= 0.0:
             if self.frequency < 0.0:
                 self.log.error("Overriding negative frequency to 0")
@@ -25,8 +26,10 @@ class SinWaveOscillator(Oscillator):
             ts = np.linspace(self._chunk_start_time, self._chunk_end_time, self.frames_per_chunk, endpoint=False)
             self._wave = np.sin(self.phase + (2 * np.pi * self.frequency) * ts)
 
+        # Update the state variables for next time
         self._chunk_start_time = self._chunk_end_time
         self._chunk_end_time += self._chunk_duration
+
         return self._wave.astype(np.float32)
 
     def print_chunk(self, chunk):
