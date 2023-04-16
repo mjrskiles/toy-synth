@@ -1,7 +1,6 @@
 import os
 import logging
 import sys
-from time import sleep
 
 from .configuration import SettingsReader
 from .communication import MQTTListener, Mailbox
@@ -44,12 +43,16 @@ if __name__ == "__main__":
         # Start the threads
         toy_synth.start()
         mqtt_listener.start()
+
+        # main thread loop
         should_run = True
         while should_run:
             if message := main_mailbox.get():
                 match message.split():
                     case ["exit"]:
                         should_run = False
+                    case _:
+                        log.info(f"Received unhandled message on main thread: {message}")
 
     except KeyboardInterrupt:
         log.info("Caught Keyboard interrupt. Shutting down.")

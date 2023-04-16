@@ -8,7 +8,7 @@ class Oscillator(Generator):
         super().__init__(sample_rate, frames_per_chunk)
         self.log = logging.getLogger(__name__)
         self._type = "Base"
-        self.frequency = 3.0 # hertz
+        self.frequency = 440.0 # hertz
         self.phase = np.pi / 2.0
         self.amplitude = 1.0
 
@@ -48,7 +48,7 @@ class Oscillator(Generator):
             radians = (degrees / 360) * 2 * np.pi
             self.phase = radians
         except:
-            self.log.error(f"[set_phase_degrees] unable to set with value {degrees}")
+            self.log.error(f"unable to set with value {degrees}")
 
     @property
     def amplitude(self):
@@ -65,6 +65,3 @@ class Oscillator(Generator):
                 raise ValueError
         except:
             self.log.error(f"unable to set with value {value}")
-    
-    def generate(self):
-        self.log.error(f"Tried to use the oscillator base class!")

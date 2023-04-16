@@ -33,6 +33,3 @@ class Generator(Component):
             self._frames_per_chunk = int_value
         except ValueError:
             self.log.error(f"unable to set with value {value}")
-
-    def generator(self):
-        self.log.error(f"Tried to use the generator base class!")
