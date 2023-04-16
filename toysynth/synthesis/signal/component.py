@@ -1,12 +1,10 @@
 import logging
 
 class Component():
-    def __init__(self, subcomponents) -> None:
+    def __init__(self) -> None:
         self.log = logging.getLogger(__name__)
-        self.subcomponents = subcomponents
 
     def __iter__(self):
-        self._input_iters = [iter(sub) for sub in self.subcomponents]
         return self
     
     def __next__(self):

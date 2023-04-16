@@ -2,8 +2,8 @@ import logging
 import threading
 from time import sleep
 
-from toysynth.synthesis.signal.generator.sin_wave_oscillator import SinWaveOscillator
-from toysynth.synthesis.signal.generator.square_wave_oscillator import SquareWaveOscillator
+from toysynth.synthesis.signal.sin_wave_oscillator import SinWaveOscillator
+from toysynth.synthesis.signal.square_wave_oscillator import SquareWaveOscillator
 from toysynth.playback.pyaudio_stream_player import PyAudioStreamPlayer
 from toysynth.communication import Mailbox
 
@@ -12,7 +12,8 @@ class Controller(threading.Thread):
         super().__init__()
         self.log = logging.getLogger(__name__)
         self.mailbox = mailbox
-        self.oscillator = SinWaveOscillator(sample_rate, frames_per_chunk)
+        self.phase_mod = SinWaveOscillator(sample_rate, frames_per_chunk, None, default_frequency=0.5)
+        self.oscillator = SinWaveOscillator(sample_rate, frames_per_chunk, self.phase_mod, default_frequency=440.0)
         # self.oscillator = SquareWaveOscillator(sample_rate, frames_per_chunk)
         self.stream_player = PyAudioStreamPlayer(sample_rate, frames_per_chunk, iter(self.oscillator))
 
