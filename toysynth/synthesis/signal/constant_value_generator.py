@@ -3,10 +3,11 @@ import logging
 import numpy as np
 
 from .generator import Generator
+from .signal_type import SignalType
 
 class ConstantValueGenerator(Generator):
     def __init__(self, sample_rate, frames_per_chunk, value=1.0):
-        super().__init__(sample_rate, frames_per_chunk)
+        super().__init__(sample_rate, frames_per_chunk, signal_type=SignalType.AMP)
         self.log = logging.getLogger(__name__)
         self.value = value
 

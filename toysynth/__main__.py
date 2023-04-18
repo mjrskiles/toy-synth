@@ -5,6 +5,7 @@ import sys
 from .configuration import SettingsReader
 from .communication import MQTTListener, Mailbox
 from .controller import Controller
+from .midi import MidiPlayer, MidiListener
 
 if __name__ == "__main__":
     log = logging.getLogger(__name__)
@@ -24,6 +25,8 @@ if __name__ == "__main__":
     # Set up the command queues
     main_mailbox = Mailbox()
     controller_mailbox = Mailbox()
+    midi_listener_mailbox = Mailbox()
+    midi_player_mailbox = Mailbox()
 
     # Set up the Synth
     sample_rate = int(settings.data['synthesis']['sample_rate'])
@@ -39,10 +42,23 @@ if __name__ == "__main__":
     topics = [topic['path'] for topic in settings.data['mqtt']['topics']]
     mqtt_listener = MQTTListener(mqtt_host, mqtt_port, topics, {"toy/synth/test/command": controller_mailbox, "toy/exit": main_mailbox})
 
+    # Create the MIDI listener
+    midi_listener = MidiListener(midi_listener_mailbox, controller_mailbox)
+    midi_player = MidiPlayer(midi_player_mailbox, midi_listener_mailbox)
+
     try:
         # Start the threads
         toy_synth.start()
         mqtt_listener.start()
+        midi_listener.start()
+        midi_player.start()
+
+        # midi_player_mailbox.put("play -f /Users/michael/projects/python/midi-files/smb1-Castle.mid")
+        # midi_player_mailbox.put("play -f /Users/michael/projects/python/midi-files/zelda1-overworld.mid")
+        # midi_player_mailbox.put("play -f /Users/michael/projects/python/midi-files/zelda1-overworld2.mid")
+        # midi_player_mailbox.put("play -f /Users/michael/projects/python/midi-files/zelda1-dungeon1.mid")
+        # midi_player_mailbox.put("play -f /Users/michael/projects/python/midi-files/zelda1-dungeon2.mid")
+        # midi_player_mailbox.put("play -f /Users/michael/projects/python/midi-files/lttp-dark-world1.mid")
 
         # main thread loop
         should_run = True
@@ -57,8 +73,14 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         log.info("Caught Keyboard interrupt. Shutting down.")
     
+    # Send the exit command to the various threads
     controller_mailbox.put("exit")
+    midi_listener_mailbox.put("exit")
+    midi_player_mailbox.put("exit")
+
     toy_synth.join()
     mqtt_listener.stop()
     mqtt_listener.join()
+    midi_player.join()
+    midi_listener.join()
     sys.exit(0)

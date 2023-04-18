@@ -3,10 +3,11 @@ import logging
 import numpy as np
 
 from .generator import Generator
+from .signal_type import SignalType
 
 class NoiseGenerator(Generator):
     def __init__(self, sample_rate, frames_per_chunk):
-        super().__init__(sample_rate, frames_per_chunk)
+        super().__init__(sample_rate, frames_per_chunk, signal_type=SignalType.WAVE)
         self.log = logging.getLogger(__name__)
 
     def __iter__(self):

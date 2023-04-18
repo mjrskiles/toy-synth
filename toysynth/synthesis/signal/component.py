@@ -1,10 +1,19 @@
 import logging
 
+from .signal_type import SignalType
+
 class Component():
-    def __init__(self, sample_rate, frames_per_chunk) -> None:
+    """
+    Represents a base signal component. A signal component is an iterator.
+    The iterator should return an ndarray of size <frames_per_chunk> with type numpy.float32
+    A component can have subcomponents, which should also be iterators.
+    """
+
+    def __init__(self, sample_rate, frames_per_chunk, signal_type: SignalType) -> None:
         self.log = logging.getLogger(__name__)
         self.sample_rate = sample_rate
         self.frames_per_chunk = frames_per_chunk
+        self.signal_type = signal_type
 
     def __iter__(self):
         return self

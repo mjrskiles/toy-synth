@@ -24,10 +24,7 @@ class SinWaveOscillator(Oscillator):
         
         else:
             ts = np.linspace(self._chunk_start_time, self._chunk_end_time, self.frames_per_chunk, endpoint=False)
-            # self.log.debug(f"phase: {self.phase}")
             self._wave = self.amplitude * np.sin(self.phase + (2 * np.pi * self.frequency) * ts)
-
-        # self.log.debug(f"wave: {self._wave}")
 
         # Update the state variables for next time
         self._chunk_start_time = self._chunk_end_time
