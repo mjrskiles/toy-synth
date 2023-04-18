@@ -75,6 +75,8 @@ class MQTTListener(threading.Thread):
                     self.mailboxes[topic].put(MQTTListener.decode_payload(msg))
             case _:
                 self.log.debug(f"Matched default case.")
+                if topic in self.mailboxes:
+                    self.mailboxes[topic].put(MQTTListener.decode_payload(msg))
                 self.log_message(msg)
 
     @staticmethod

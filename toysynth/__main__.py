@@ -40,7 +40,7 @@ if __name__ == "__main__":
     mqtt_port = int(settings.data['mqtt']['port'])
 
     topics = [topic['path'] for topic in settings.data['mqtt']['topics']]
-    mqtt_listener = MQTTListener(mqtt_host, mqtt_port, topics, {"toy/synth/test/command": controller_mailbox, "toy/exit": main_mailbox})
+    mqtt_listener = MQTTListener(mqtt_host, mqtt_port, topics, {"toy/synth/test/command": controller_mailbox, "toy/exit": main_mailbox, "toy/midi/player": midi_player_mailbox})
 
     # Create the MIDI listener
     midi_listener = MidiListener(midi_listener_mailbox, controller_mailbox)

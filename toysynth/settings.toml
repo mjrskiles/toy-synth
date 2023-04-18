@@ -20,3 +20,7 @@ path = "toy/synth/test/command"
 [[mqtt.topics]]
 name = "exit"
 path = "toy/exit"
+
+[[mqtt.topics]]
+name = "midi file player"
+path = "toy/midi/player"
