@@ -24,3 +24,6 @@ path = "toy/exit"
 [[mqtt.topics]]
 name = "midi file player"
 path = "toy/midi/player"
+
+[midi]
+player_port_name = "Toy Synth MIDI Player"

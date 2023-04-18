@@ -42,23 +42,17 @@ if __name__ == "__main__":
     topics = [topic['path'] for topic in settings.data['mqtt']['topics']]
     mqtt_listener = MQTTListener(mqtt_host, mqtt_port, topics, {"toy/synth/test/command": controller_mailbox, "toy/exit": main_mailbox, "toy/midi/player": midi_player_mailbox})
 
-    # Create the MIDI listener
-    midi_listener = MidiListener(midi_listener_mailbox, controller_mailbox)
-    midi_player = MidiPlayer(midi_player_mailbox, midi_listener_mailbox)
+    # Create the MIDI threads
+    player_port_name = settings.data['midi']['player_port_name']
+    midi_listener = MidiListener(midi_listener_mailbox, controller_mailbox, player_port_name)
+    midi_player = MidiPlayer(midi_player_mailbox, player_port_name)
 
     try:
         # Start the threads
         toy_synth.start()
         mqtt_listener.start()
-        midi_listener.start()
         midi_player.start()
-
-        # midi_player_mailbox.put("play -f /Users/michael/projects/python/midi-files/smb1-Castle.mid")
-        # midi_player_mailbox.put("play -f /Users/michael/projects/python/midi-files/zelda1-overworld.mid")
-        # midi_player_mailbox.put("play -f /Users/michael/projects/python/midi-files/zelda1-overworld2.mid")
-        # midi_player_mailbox.put("play -f /Users/michael/projects/python/midi-files/zelda1-dungeon1.mid")
-        # midi_player_mailbox.put("play -f /Users/michael/projects/python/midi-files/zelda1-dungeon2.mid")
-        # midi_player_mailbox.put("play -f /Users/michael/projects/python/midi-files/lttp-dark-world1.mid")
+        midi_listener.start()
 
         # main thread loop
         should_run = True
@@ -75,8 +69,8 @@ if __name__ == "__main__":
     
     # Send the exit command to the various threads
     controller_mailbox.put("exit")
-    midi_listener_mailbox.put("exit")
     midi_player_mailbox.put("exit")
+    midi_listener_mailbox.put("exit")
 
     toy_synth.join()
     mqtt_listener.stop()
