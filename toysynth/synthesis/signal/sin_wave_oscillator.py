@@ -17,7 +17,7 @@ class SinWaveOscillator(Oscillator):
     
     def __next__(self):
         # Generate the wave
-        if self.frequency <= 0.0:
+        if not self.active or self.frequency <= 0.0:
             if self.frequency < 0.0:
                 self.log.error("Overriding negative frequency to 0")
             self._wave = np.zeros(self.frames_per_chunk)

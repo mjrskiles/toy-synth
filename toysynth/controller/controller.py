@@ -99,6 +99,7 @@ class Controller(threading.Thread):
                         # self.log.debug(f"Adding frequency: {freq}")
                         for i in range(len(self.oscillators)):
                             self.oscillators[i].frequency = freqs[i]
+                            self.oscillators[i].active = True if freqs[i] != 0.0 else False
                     case ["note_off", "-n", note, "-c", channel]:
                         # self.log.debug(f"Got note off command: {message}")
                         freq = midi.frequencies[int(note)]
@@ -109,6 +110,7 @@ class Controller(threading.Thread):
                             freqs[chan] = 0.0 
                         for i in range(len(self.oscillators)):
                             self.oscillators[i].frequency = freqs[i]
+                            self.oscillators[i].active = True if freqs[i] != 0.0 else False
                     case _:
                         self.log.info(f"Matched unknown command: {message}")
         return

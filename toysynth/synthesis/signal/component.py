@@ -14,6 +14,7 @@ class Component():
         self.sample_rate = sample_rate
         self.frames_per_chunk = frames_per_chunk
         self.signal_type = signal_type
+        self.active = False
 
     def __iter__(self):
         return self
@@ -47,3 +48,19 @@ class Component():
             self._frames_per_chunk = int_value
         except ValueError:
             self.log.error(f"unable to set with value {value}")
+
+    @property
+    def active(self):
+        """
+        The active status. If a component is active it should do its job, otherwise act as a bypass.
+        If the component is a generator it should generate zeros when inactive.
+        """
+        return self._active
+    
+    @active.setter
+    def active(self, value):
+        try:
+            bool_val = bool(value)
+            self._active = bool_val
+        except ValueError:
+            self.log.error(f"Unable to set with value {value}")
