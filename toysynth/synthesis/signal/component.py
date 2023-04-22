@@ -1,4 +1,5 @@
 import logging
+from typing import List
 
 from .signal_type import SignalType
 
@@ -9,12 +10,13 @@ class Component():
     A component can have subcomponents, which should also be iterators.
     """
 
-    def __init__(self, sample_rate, frames_per_chunk, signal_type: SignalType) -> None:
+    def __init__(self, sample_rate, frames_per_chunk, signal_type: SignalType, subcomponents: List['Component']=[]):
         self.log = logging.getLogger(__name__)
         self.sample_rate = sample_rate
         self.frames_per_chunk = frames_per_chunk
         self.signal_type = signal_type
         self.active = False
+        self.subcomponents = subcomponents
 
     def __iter__(self):
         return self
@@ -64,3 +66,8 @@ class Component():
             self._active = bool_val
         except ValueError:
             self.log.error(f"Unable to set with value {value}")
+
+    def add_subcomponent(self, subcomponent):
+        if not isinstance(subcomponent, Component):
+            raise TypeError("Subcomponent must be an instance of Component class")
+        self.subcomponents.append(subcomponent)

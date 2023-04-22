@@ -64,6 +64,14 @@ From the 'C:\Program Files\mosquitto' dir:
 
 ```.\mosquitto_pub -t "toy/exit" -m "exit"```
 
+### Mac
+
+Start mosquitto
+
+```/usr/local/sbin/mosquitto -c /usr/local/etc/mosquitto/mosquitto.conf```
+
+
+
 # Architecture
 
 ## Modules
