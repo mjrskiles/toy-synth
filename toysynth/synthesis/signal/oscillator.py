@@ -5,11 +5,11 @@ from .generator import Generator
 from .signal_type import SignalType
 
 class Oscillator(Generator):
-    def __init__(self, sample_rate, frames_per_chunk, default_frequency=440.0):
+    def __init__(self, sample_rate, frames_per_chunk):
         super().__init__(sample_rate, frames_per_chunk, signal_type=SignalType.WAVE)
         self.log = logging.getLogger(__name__)
         self._type = "Base"
-        self.frequency = default_frequency # hertz
+        self.frequency = 0.0
         self.phase = 0.0
         self.amplitude = 1.0
 

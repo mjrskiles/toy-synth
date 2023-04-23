@@ -1,4 +1,5 @@
 import pyaudio
+import time
 
 from .stream_player import StreamPlayer
 
@@ -7,6 +8,8 @@ class PyAudioStreamPlayer(StreamPlayer):
         super().__init__(sample_rate, frames_per_chunk, input_delegate)
         self.pyaudio_interface = pyaudio.PyAudio()
         self._output_stream = None
+        self._chunk_duration = self.frames_per_chunk / self.sample_rate
+        self.last_time = time.time()
 
     def play(self):
         if self._output_stream is None:
@@ -31,7 +34,12 @@ class PyAudioStreamPlayer(StreamPlayer):
         """
         The audio callback should just have to call next() on the input delegate
         """
+        start_time = time.time()
         frames = next(self.input_delegate)
+        end_time = time.time()
+        duration = end_time - start_time
+        if duration > self._chunk_duration:
+            self.log.debug(f"Processing chunk took {duration}s")
         return (frames, pyaudio.paContinue)
     
     def is_active(self):

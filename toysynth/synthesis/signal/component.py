@@ -1,5 +1,8 @@
 import logging
 from typing import List
+from copy import deepcopy
+
+import numpy as np
 
 from .signal_type import SignalType
 
@@ -8,6 +11,11 @@ class Component():
     Represents a base signal component. A signal component is an iterator.
     The iterator should return an ndarray of size <frames_per_chunk> with type numpy.float32
     A component can have subcomponents, which should also be iterators.
+
+    A component must implement
+    __iter__
+    __next__
+    __deepcopy__
     """
 
     def __init__(self, sample_rate, frames_per_chunk, signal_type: SignalType, subcomponents: List['Component']=[]):
@@ -23,7 +31,11 @@ class Component():
     
     def __next__(self):
         self.log.error("Child class should override the __next__ method")
-        return
+        raise NotImplementedError
+    
+    def __deepcopy__(self, memo):
+        self.log.error("invoked deepcopy on base class")
+        raise NotImplementedError
     
     @property
     def sample_rate(self):
@@ -71,3 +83,13 @@ class Component():
         if not isinstance(subcomponent, Component):
             raise TypeError("Subcomponent must be an instance of Component class")
         self.subcomponents.append(subcomponent)
+
+    def normalize_signal(self, signal):
+        min_val = np.min(signal)
+        max_val = np.max(signal)
+
+        if min_val == max_val:
+            return np.zeros_like(signal)
+
+        normalized_signal = 2 * (signal - min_val) / (max_val - min_val) - 1
+        return normalized_signal

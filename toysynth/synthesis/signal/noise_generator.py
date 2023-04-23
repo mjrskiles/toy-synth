@@ -1,4 +1,5 @@
 import logging
+from copy import deepcopy
 
 import numpy as np
 
@@ -17,3 +18,6 @@ class NoiseGenerator(Generator):
         rng = np.random.default_rng()
         noise = rng.uniform(-1.0, 1.0, self.frames_per_chunk)
         return noise.astype(np.float32)
+    
+    def __deepcopy__(self, memo):
+        return NoiseGenerator(self.sample_rate, self.frames_per_chunk)

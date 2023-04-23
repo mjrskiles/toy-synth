@@ -1,4 +1,5 @@
 import logging
+from copy import deepcopy
 
 import numpy as np
 
@@ -30,3 +31,5 @@ class ConstantValueGenerator(Generator):
         arr = np.full(self.frames_per_chunk, self.value, dtype=np.float32)
         return arr
 
+    def __deepcopy__(self, memo):
+        return ConstantValueGenerator(self.sample_rate, self.frames_per_chunk, self.value)

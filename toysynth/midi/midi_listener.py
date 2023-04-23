@@ -17,8 +17,8 @@ class MidiListener(threading.Thread):
     
     def run(self):
         should_run = True
-        inport = mido.open_input(self.player_port_name)
-        # inport = mido.open_input("MPK mini 3")
+        # inport = mido.open_input(self.player_port_name)
+        inport = mido.open_input("MPK mini 3")
         self.log.info(f"Available MIDI input ports: {mido.get_input_names()}")
         while should_run:
             # iter_pending won't block
@@ -30,12 +30,16 @@ class MidiListener(threading.Thread):
                     case "note_off":
                         ctrl_msg = mb.builder().note_off().with_note(msg.note).on_channel(msg.channel)
                         self.controller_mailbox.put(str(ctrl_msg))
+                    case "control_change":
+                        ctrl_msg = mb.builder().control_change().on_channel(msg.channel).with_control_num(msg.control).with_value(msg.value)
+                        # self.log.debug(f"Received CC : {msg} and translated to : {ctrl_msg}")
+                        self.controller_mailbox.put(str(ctrl_msg))
                     case "stop":
                         self.log.info(f"Received midi STOP message")
                     case _:
                         self.log.info(f"Matched unknown MIDI message: {msg}")
             
-            # get and get_nowait both raise queue.Empty exception if there is nothing int he queue
+            # get_nowait raises queue.Empty exception if there is nothing int he queue
             try:
                 if mail := self.mailbox.get_nowait():
                     match mail.split():

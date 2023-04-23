@@ -1,4 +1,5 @@
 import logging
+from copy import deepcopy
 
 import numpy as np
 
@@ -25,5 +26,8 @@ class Mixer(Component):
             mix += next(sub)
         
         return mix / len(self.subcomponent_iters)
+    
+    def __deepcopy__(self, memo):
+        return Mixer(self.sample_rate, self.frames_per_chunk, subcomponents=[deepcopy(sub, memo) for sub in self.subcomponents])
 
         

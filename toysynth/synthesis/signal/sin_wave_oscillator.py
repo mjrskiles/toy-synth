@@ -1,12 +1,14 @@
 import logging
+from copy import deepcopy
 
 import numpy as np
 
 from .oscillator import Oscillator
 
 class SinWaveOscillator(Oscillator):
-    def __init__(self, sample_rate, frames_per_chunk, default_frequency):
-        super().__init__(sample_rate, frames_per_chunk, default_frequency)
+    def __init__(self, sample_rate, frames_per_chunk):
+        super().__init__(sample_rate, frames_per_chunk)
+        self.log = logging.getLogger(__name__)
 
     def __iter__(self):
         self._wave = np.zeros(self.frames_per_chunk)
@@ -31,6 +33,9 @@ class SinWaveOscillator(Oscillator):
         self._chunk_end_time += self._chunk_duration
 
         return self._wave.astype(np.float32)
+    
+    def __deepcopy__(self, memo):
+        return SinWaveOscillator(self.sample_rate, self.frames_per_chunk)
 
     def print_chunk(self, chunk):
         for frame in chunk:

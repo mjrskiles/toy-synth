@@ -4,8 +4,8 @@ import sys
 
 from .configuration import SettingsReader
 from .communication import MQTTListener, Mailbox
-from .controller import Controller
 from .midi import MidiPlayer, MidiListener
+from .synthesis import Synthesizer
 
 if __name__ == "__main__":
     log = logging.getLogger(__name__)
@@ -24,27 +24,27 @@ if __name__ == "__main__":
 
     # Set up the command queues
     main_mailbox = Mailbox()
-    controller_mailbox = Mailbox()
+    synthesizer_mailbox = Mailbox()
     midi_listener_mailbox = Mailbox()
     midi_player_mailbox = Mailbox()
 
     # Set up the Synth
     sample_rate = int(settings.data['synthesis']['sample_rate'])
-    sample_buffer_target_size = int(settings.data['synthesis']['sample_buffer_target_size'])
     frames_per_chunk = int(settings.data['synthesis']['frames_per_chunk'])
 
-    toy_synth = Controller(controller_mailbox, sample_rate, frames_per_chunk)
+    # toy_synth = Controller(synthesizer_mailbox, sample_rate, frames_per_chunk)
+    toy_synth = Synthesizer(synthesizer_mailbox, sample_rate, frames_per_chunk)
     
     # Open the MQTT listener
     mqtt_host = settings.data['mqtt']['host']
     mqtt_port = int(settings.data['mqtt']['port'])
 
     topics = [topic['path'] for topic in settings.data['mqtt']['topics']]
-    mqtt_listener = MQTTListener(mqtt_host, mqtt_port, topics, {"toy/synth/test/command": controller_mailbox, "toy/exit": main_mailbox, "toy/midi/player": midi_player_mailbox})
+    mqtt_listener = MQTTListener(mqtt_host, mqtt_port, topics, {"toy/synth/test/command": synthesizer_mailbox, "toy/exit": main_mailbox, "toy/midi/player": midi_player_mailbox})
 
     # Create the MIDI threads
     player_port_name = settings.data['midi']['player_port_name']
-    midi_listener = MidiListener(midi_listener_mailbox, controller_mailbox, player_port_name)
+    midi_listener = MidiListener(midi_listener_mailbox, synthesizer_mailbox, player_port_name)
     midi_player = MidiPlayer(midi_player_mailbox, player_port_name)
 
     try:
@@ -68,7 +68,7 @@ if __name__ == "__main__":
         log.info("Caught Keyboard interrupt. Shutting down.")
     
     # Send the exit command to the various threads
-    controller_mailbox.put("exit")
+    synthesizer_mailbox.put("exit")
     midi_player_mailbox.put("exit")
     midi_listener_mailbox.put("exit")
 

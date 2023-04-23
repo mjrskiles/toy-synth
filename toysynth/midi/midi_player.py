@@ -17,6 +17,7 @@ class MidiPlayer(threading.Thread):
     def play_file(self, file_path):
         try:
             midi_file = mido.MidiFile(file_path)
+            self.log.info(f"Opened MIDI file type {midi_file.type}")
             for msg in midi_file.play():
                 self.port.send(msg)
         except Exception as err:
