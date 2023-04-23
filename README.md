@@ -37,7 +37,7 @@ brew install portaudio
 
 ### Windows
 
-Make sure moquitto is running:
+Make sure mosquitto is running:
 
 cd into 'C:\Program Files\mosquitto' in a new PowerShell window
 
@@ -46,6 +46,8 @@ cd into 'C:\Program Files\mosquitto' in a new PowerShell window
 Then in another PowerShell window:
 
 cd into your project directory
+
+(your virtual env should be activated)
 
 ```python toysynth/main.py```
 
@@ -59,6 +61,16 @@ From the 'C:\Program Files\mosquitto' dir:
 ```.\mosquitto_pub -t "toy/synth/test/command" -m "note_on -f 440.0"```
 
 ```.\mosquitto_pub -t "toy/synth/test/command" -m "note_off"```
+
+```.\mosquitto_pub -t "toy/exit" -m "exit"```
+
+### Mac
+
+Start mosquitto
+
+```/usr/local/sbin/mosquitto -c /usr/local/etc/mosquitto/mosquitto.conf```
+
+
 
 # Architecture
 

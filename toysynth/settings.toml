@@ -2,9 +2,27 @@ app_name = "toy synth"
 
 [synthesis]
 sample_rate = 44100
-sample_buffer_target_size = 4096
-frames_per_buffer = 64
+frames_per_chunk = 1024
 
 [mqtt]
 host = "localhost"
 port = 1883
+
+[[mqtt.topics]]
+name = "log"
+path = "toy/log"
+
+[[mqtt.topics]]
+name = "command test"
+path = "toy/synth/test/command"
+
+[[mqtt.topics]]
+name = "exit"
+path = "toy/exit"
+
+[[mqtt.topics]]
+name = "midi file player"
+path = "toy/midi/player"
+
+[midi]
+player_port_name = "Toy Synth MIDI Player"

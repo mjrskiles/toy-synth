@@ -65,8 +65,9 @@ class MQTTListener(threading.Thread):
         self.log.debug(f"Topic: {topic}")
         match topic:
             case "toy/exit":
-                self.log.info(f"Shutting down MQTT client.")
-                self.stop()
+                self.log.info(f"Shutting down from MQTT client.")
+                if topic in self.mailboxes:
+                    self.mailboxes[topic].put("exit")
             case "toy/log":
                 self.log_message(msg)
             case "toy/synth/test/command":
@@ -74,6 +75,8 @@ class MQTTListener(threading.Thread):
                     self.mailboxes[topic].put(MQTTListener.decode_payload(msg))
             case _:
                 self.log.debug(f"Matched default case.")
+                if topic in self.mailboxes:
+                    self.mailboxes[topic].put(MQTTListener.decode_payload(msg))
                 self.log_message(msg)
 
     @staticmethod
