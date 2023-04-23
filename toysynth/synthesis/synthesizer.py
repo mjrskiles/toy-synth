@@ -54,7 +54,7 @@ class Synthesizer(threading.Thread):
                         # cc_num = int(control_num)
                         cc_val = int(control_val)
                         cutoff_vals = np.logspace(4, 14, 128, endpoint=True, base=2, dtype=np.float32) # 2^14=16384 : that is the highest possible cutoff value
-                        # self.set_cutoff_frequency(cutoff_vals[cc_val])
+                        self.set_cutoff_frequency(cutoff_vals[cc_val])
                         self.log.info(f"LPF Cutoff: {cutoff_vals[cc_val]}")
                     case _:
                         self.log.info(f"Matched unknown command: {message}")
