@@ -49,7 +49,7 @@ cd into your project directory
 
 (your virtual env should be activated)
 
-```python toysynth/main.py```
+```python -m toysynth```
 
 To publish a message
 ---
@@ -58,9 +58,7 @@ From the 'C:\Program Files\mosquitto' dir:
 
 ```.\mosquitto_pub -t "toy/log" -m "<your message>"```
 
-```.\mosquitto_pub -t "toy/synth/test/command" -m "note_on -f 440.0"```
-
-```.\mosquitto_pub -t "toy/synth/test/command" -m "note_off"```
+```.\mosquitto_pub -t "toy/midi/player" -m "play -f ./test/midi-files/zelda1-dungeon1.mid"```
 
 ```.\mosquitto_pub -t "toy/exit" -m "exit"```
 
@@ -71,47 +69,6 @@ Start mosquitto
 ```/usr/local/sbin/mosquitto -c /usr/local/etc/mosquitto/mosquitto.conf```
 
 
-
-# Architecture
-
-## Modules
-
-synth
----
-
-communication
----
-
-configuration
----
-
-
-## Ideas / discussion
-
-How are we going to communicate between threads?
-- I wanted to use MQTT but that would introduce a dependency on having a broker
-    - It seems like it wouldn't be easy to build your own broker
-- Mailboxes?
-- Queues?
-
-What does the general shape of a synth command look like?
-Json?
-{
-    payload: {
-        command:  "note_on",
-        params: {
-            note: 60
-            velocity: 1.0
-        }
-    }
-}
-
-What commands can the synth take?
-
-(command - params)
-note on - note, velocity
-note off - note
-
 ## API
 
 ### Topics
@@ -120,7 +77,7 @@ All topics should begin with toy/
 
 toy/exit
 ---
-Sending anything on this topic should cause the toy synth program to exit gracefully. Not implemented yet (4/9/23)
+Sending anything on this topic should cause the toy synth program to exit gracefully.
 
 toy/log
 ---
