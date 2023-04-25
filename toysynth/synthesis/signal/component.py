@@ -22,9 +22,9 @@ class Component():
         self.log = logging.getLogger(__name__)
         self.sample_rate = sample_rate
         self.frames_per_chunk = frames_per_chunk
+        self.subcomponents = subcomponents
         self.signal_type = signal_type
         self.active = False
-        self.subcomponents = subcomponents
 
     def __iter__(self):
         return self
@@ -76,6 +76,8 @@ class Component():
         try:
             bool_val = bool(value)
             self._active = bool_val
+            for sub in self.subcomponents:
+                sub.active = bool_val
         except ValueError:
             self.log.error(f"Unable to set with value {value}")
 

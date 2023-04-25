@@ -17,11 +17,10 @@ class MidiListener(threading.Thread):
     
     def run(self):
         should_run = True
-        # inport = mido.open_input(self.player_port_name)
-        inport = mido.open_input("MPK mini 3")
+        inport = mido.open_input(self.player_port_name)
+        # inport = mido.open_input("MPK mini 3")
         self.log.info(f"Available MIDI input ports: {mido.get_input_names()}")
         while should_run:
-            # iter_pending won't block
             if msg := inport.receive():
                 match msg.type:
                     case "note_on":

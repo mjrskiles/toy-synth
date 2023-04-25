@@ -32,7 +32,7 @@ class Synthesizer(threading.Thread):
             if message := self.mailbox.get(): 
                 match message.split():
                     case ["exit"]:
-                        self.log.debug("Got exit command.")
+                        self.log.info("Got exit command.")
                         self.stream_player.stop()
                         should_run = False
                     case ["note_on", "-n", note, "-c", channel]:
@@ -61,16 +61,18 @@ class Synthesizer(threading.Thread):
         return
 
     def setup_signal_chain(self):
-        osc_a = signal.SquareWaveOscillator(self.sample_rate, self.frames_per_chunk)
-        osc_b = signal.SinWaveOscillator(self.sample_rate, self.frames_per_chunk)
+        osc_a = signal.SinWaveOscillator(self.sample_rate, self.frames_per_chunk)
+        osc_b = signal.SquareWaveOscillator(self.sample_rate, self.frames_per_chunk)
         osc_b.set_phase_degrees(45)
 
         osc_mixer = signal.Mixer(self.sample_rate, self.frames_per_chunk, [osc_a, osc_b])
 
-        lpf = signal.LowPassFilter(self.sample_rate, self.frames_per_chunk, osc_mixer, 100)
+        lpf = signal.LowPassFilter(self.sample_rate, self.frames_per_chunk, osc_mixer, 8000.0)
 
-        signal_chain = signal.Chain(lpf)
-        return signal_chain
+        adsr_env = signal.AdsrEnvelope(self.sample_rate, self.frames_per_chunk, lpf)
+
+        signal_chain = signal.Chain(self.sample_rate, self.frames_per_chunk, adsr_env)
+        return iter(signal_chain)
     
     def generator(self):
         mix = np.zeros(self.frames_per_chunk, np.float32)
