@@ -1,5 +1,6 @@
 from .sin_wave_oscillator import SinWaveOscillator
 from .square_wave_oscillator import SquareWaveOscillator
+# from .triangle_wave_oscillator import TriangleWaveOscillator
 from .mixer import Mixer
 from .constant_value_generator import ConstantValueGenerator
 from .noise_generator import NoiseGenerator

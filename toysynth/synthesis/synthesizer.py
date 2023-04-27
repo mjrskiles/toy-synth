@@ -62,11 +62,11 @@ class Synthesizer(threading.Thread):
         return
 
     def setup_signal_chain(self):
-        osc_a = signal.SinWaveOscillator(self.sample_rate, self.frames_per_chunk)
-        osc_b = signal.SquareWaveOscillator(self.sample_rate, self.frames_per_chunk)
-        osc_b.set_phase_degrees(45)
+        osc_a = signal.SquareWaveOscillator(self.sample_rate, self.frames_per_chunk)
+        # osc_b = signal.SquareWaveOscillator(self.sample_rate, self.frames_per_chunk)
+        # osc_b.set_phase_degrees(45)
 
-        osc_mixer = signal.Mixer(self.sample_rate, self.frames_per_chunk, [osc_a, osc_b])
+        osc_mixer = signal.Mixer(self.sample_rate, self.frames_per_chunk, [osc_a])
 
         lpf = signal.LowPassFilter(self.sample_rate, self.frames_per_chunk, osc_mixer, 8000.0)
 

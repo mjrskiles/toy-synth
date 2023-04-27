@@ -19,10 +19,10 @@ class AdsrEnvelope(Component):
         self.log = logging.getLogger(__name__)
         self.add_subcomponent(source)
         self._current_amplitude = 0.0
-        self._attack = np.float32(0.8)
-        self._decay = np.float32(0.6)
+        self._attack = np.float32(0.2)
+        self._decay = np.float32(0.3)
         self._sustain = np.float32(0.5)
-        self._release = np.float32(1.0)
+        self._release = np.float32(0.5)
         self._iteration_number = 0
         self._sustain_frames_num = self.frames_per_chunk * 2
         self._target_amp = 1.0
@@ -62,7 +62,7 @@ class AdsrEnvelope(Component):
                     self._stage_trig_time = time.time()
                     self._iteration_number = 0
                     self.calculate_r_ramp()
-                    self.log.debug(f"Triggered release state after {elapsed}s")
+                    self.log.debug(f"{self.name}: Triggered release state after {elapsed}s")
 
                 self._props["amp"] = self._current_amplitude
                 return (source_chunk, self._props)
@@ -79,7 +79,7 @@ class AdsrEnvelope(Component):
                     partial_chunk = self._r_ramp[ramp_index:]
                     zeros = np.zeros((self.frames_per_chunk - len(partial_chunk)), dtype=np.float32)
                     ramp_chunk = np.concatenate([partial_chunk, zeros], axis=0)
-                    self.log.debug(f"End of Release Ramp after {elapsed}s")
+                    self.log.debug(f"{self.name}: End of Release Ramp after {elapsed}s")
                     if not self.active:
                         self.state = AdsrEnvelope.State.IDLE
                 else:
@@ -176,12 +176,15 @@ class AdsrEnvelope(Component):
         self._decay_index = attack_frames
         decay_ramp = np.linspace(self._target_amp, self.sustain, decay_frames, dtype=np.float32, endpoint=False)
 
+        # we need to have at least one full chunk in the sustain ramp. 
+        # Usually we'll partially cross into the sustain region from the decay in one chunk, 
+        # then the next chunks can read from the sustain region over and over until the note is released
         sustain_frames = self._sustain_frames_num
         self._sustain_index = self._decay_index + decay_frames
         sustain_ramp = np.full(sustain_frames, self.sustain, dtype=np.float32)
 
         self._ads_ramp = np.concatenate([attack_ramp, decay_ramp, sustain_ramp], axis=0)
-        self.log.debug(f"ADS Ramp:\n{self._ads_ramp}")
+        # self.log.debug(f"ADS Ramp:\n{self._ads_ramp}")
 
     def calculate_r_ramp(self):
         release_frames = int(self.sample_rate * self.release)
@@ -195,4 +198,4 @@ class AdsrEnvelope(Component):
         self._iteration_number = 0
         for sub in self.subcomponents:
             sub.active = True
-        self.log.info(f"Triggered attack stage")
+        self.log.info(f"{self.name}: Triggered attack stage")
