@@ -15,16 +15,17 @@ class AdsrEnvelope(Component):
         RELEASE = 2
 
     def __init__(self, sample_rate, frames_per_chunk, source: Component):
-        super().__init__(sample_rate, frames_per_chunk, signal_type=SignalType.WAVE, subcomponents=[])
+        super().__init__(sample_rate, frames_per_chunk, signal_type=SignalType.WAVE, subcomponents=[], name="ADSREnvelope")
         self.log = logging.getLogger(__name__)
         self.add_subcomponent(source)
-        self.current_amplitude = 0.0
-        self._attack = np.float32(1.0)
+        self._current_amplitude = 0.0
+        self._attack = np.float32(0.8)
         self._decay = np.float32(0.6)
         self._sustain = np.float32(0.5)
         self._release = np.float32(1.0)
         self._iteration_number = 0
         self._sustain_frames_num = self.frames_per_chunk * 2
+        self._target_amp = 1.0
         self.calculate_ads_ramps()
         self.calculate_r_ramp()
         self.state = AdsrEnvelope.State.IDLE
@@ -34,10 +35,14 @@ class AdsrEnvelope(Component):
     def __iter__(self):
         self.source_iter = iter(self.subcomponents[0])
         self._stage_trig_time = time.time()
+        self._props["amp"] = self._current_amplitude
         return self
     
     def __next__(self):
-        source_chunk = next(self.source_iter)
+        (source_chunk, props) = next(self.source_iter)
+        if self._target_amp != props["amp"]:
+            self._target_amp = props["amp"]
+            self.calculate_ads_ramps()
         match self.state:
             case AdsrEnvelope.State.ADS:
                 ramp_index = self._iteration_number * self.frames_per_chunk
@@ -48,7 +53,7 @@ class AdsrEnvelope(Component):
                 ramp_chunk = self._ads_ramp[ramp_index:end_index]
                 source_chunk = source_chunk * ramp_chunk
                 # self.log.debug(f"Ramp chunk:\n{ramp_chunk}")
-                self.current_amplitude = ramp_chunk[-1]
+                self._current_amplitude = ramp_chunk[-1]
 
                 now = time.time()
                 elapsed = now - self._stage_trig_time
@@ -58,7 +63,9 @@ class AdsrEnvelope(Component):
                     self._iteration_number = 0
                     self.calculate_r_ramp()
                     self.log.debug(f"Triggered release state after {elapsed}s")
-                return source_chunk
+
+                self._props["amp"] = self._current_amplitude
+                return (source_chunk, self._props)
 
             case AdsrEnvelope.State.RELEASE:
                 now = time.time()
@@ -79,16 +86,17 @@ class AdsrEnvelope(Component):
                     end_index = ramp_index + self.frames_per_chunk
                     ramp_chunk = self._r_ramp[ramp_index:end_index]
                 source_chunk = source_chunk * ramp_chunk
-                return source_chunk
+                return (source_chunk, self._props)
             case AdsrEnvelope.State.IDLE:
                 if self.active:
                     self.trigger_attack()
-                return np.zeros(self.frames_per_chunk, dtype=np.float32)
+                self._props["amp"] = 0.0
+                return (np.zeros(self.frames_per_chunk, dtype=np.float32), self._props)
 
 
         
     def __deepcopy__(self, memo):
-        return AdsrEnvelope(self.sample_rate, self.frames_per_chunk, deepcopy(self.subcomponents[0]))
+        return AdsrEnvelope(self.sample_rate, self.frames_per_chunk, deepcopy(self.subcomponents[0], memo))
     
     @property
     def attack(self):
@@ -151,6 +159,9 @@ class AdsrEnvelope(Component):
     
     @active.setter
     def active(self, value):
+        """
+        This setter overrides the Component setter and specifically does NOT deactivate its subcomponents automatically
+        """
         try:
             bool_val = bool(value)
             self._active = bool_val
@@ -159,11 +170,11 @@ class AdsrEnvelope(Component):
 
     def calculate_ads_ramps(self):
         attack_frames = int(self.sample_rate * self.attack) # attack is in s
-        attack_ramp = np.linspace(0, 1, attack_frames, dtype=np.float32, endpoint=False)
+        attack_ramp = np.linspace(0, self._target_amp, attack_frames, dtype=np.float32, endpoint=False)
 
         decay_frames = int(self.sample_rate * self.decay)
         self._decay_index = attack_frames
-        decay_ramp = np.linspace(1, self.sustain, decay_frames, dtype=np.float32, endpoint=False)
+        decay_ramp = np.linspace(self._target_amp, self.sustain, decay_frames, dtype=np.float32, endpoint=False)
 
         sustain_frames = self._sustain_frames_num
         self._sustain_index = self._decay_index + decay_frames
@@ -175,7 +186,7 @@ class AdsrEnvelope(Component):
     def calculate_r_ramp(self):
         release_frames = int(self.sample_rate * self.release)
         self._release_index = self._sustain_index + (self._sustain_frames_num)
-        self._r_ramp = np.linspace(self.current_amplitude, 0, release_frames, endpoint=True)
+        self._r_ramp = np.linspace(self._current_amplitude, 0, release_frames, endpoint=True)
 
 
     def trigger_attack(self):

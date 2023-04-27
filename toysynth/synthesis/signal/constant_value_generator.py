@@ -7,10 +7,11 @@ from .generator import Generator
 from .signal_type import SignalType
 
 class ConstantValueGenerator(Generator):
-    def __init__(self, sample_rate, frames_per_chunk, value=1.0):
-        super().__init__(sample_rate, frames_per_chunk, signal_type=SignalType.AMP)
+    def __init__(self, sample_rate, frames_per_chunk, value=1.0, name="ConstantValueGenerator"):
+        super().__init__(sample_rate, frames_per_chunk, signal_type=SignalType.AMP, name=name)
         self.log = logging.getLogger(__name__)
         self.value = value
+        self._props["amp"] = 1.0
 
     @property
     def value(self):
@@ -29,7 +30,7 @@ class ConstantValueGenerator(Generator):
     
     def __next__(self):
         arr = np.full(self.frames_per_chunk, self.value, dtype=np.float32)
-        return arr
+        return (arr, self._props)
 
     def __deepcopy__(self, memo):
         return ConstantValueGenerator(self.sample_rate, self.frames_per_chunk, self.value)

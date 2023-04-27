@@ -11,10 +11,10 @@ class SquareWaveOscillator(SinWaveOscillator):
         self.log = logging.getLogger(__name__)
 
     def __next__(self):
-        sin_wave = super().__next__()
+        (sin_wave, props) = super().__next__()
         square_wave = np.sign(sin_wave)
         # self.print_chunk(square_wave)
-        return square_wave
+        return (square_wave, props)
     
     def __deepcopy__(self, memo):
         return SquareWaveOscillator(self.sample_rate, self.frames_per_chunk)

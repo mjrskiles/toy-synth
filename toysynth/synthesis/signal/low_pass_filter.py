@@ -8,8 +8,8 @@ from .component import Component
 from .signal_type import SignalType
 
 class LowPassFilter(Component):
-    def __init__(self, sample_rate, frames_per_chunk, source: Component, cutoff_frequency: float, filter_order: int = 2):
-        super().__init__(sample_rate, frames_per_chunk, signal_type=SignalType.WAVE)
+    def __init__(self, sample_rate, frames_per_chunk, source: Component, cutoff_frequency: float, filter_order: int = 2, name="LowPassFilter"):
+        super().__init__(sample_rate, frames_per_chunk, signal_type=SignalType.WAVE, name=name)
         self.log = logging.getLogger(__name__)
         self.subcomponents = []
         self.add_subcomponent(source)
@@ -18,6 +18,7 @@ class LowPassFilter(Component):
         self.cutoff_frequency = cutoff_frequency
         self.b, self.a = self.compute_coefficients()
         self.zi = self.compute_initial_conditions()
+        self._props["amp"] = 0.0
 
     @property
     def cutoff_frequency(self):
@@ -49,9 +50,9 @@ class LowPassFilter(Component):
         return self
 
     def __next__(self):
-        input_signal = next(self.source_iter)
+        (input_signal, props) = next(self.source_iter)
         output_signal, self.zi = lfilter(self.b, self.a, input_signal, zi=self.zi)
-        return output_signal.astype(np.float32)
+        return (output_signal.astype(np.float32), props)
 
     def __deepcopy__(self, memo):
-        return LowPassFilter(self.sample_rate, self.frames_per_chunk, deepcopy(self.subcomponents[0]), self.cutoff_frequency, self.filter_order)
+        return LowPassFilter(self.sample_rate, self.frames_per_chunk, deepcopy(self.subcomponents[0], memo), self.cutoff_frequency, self.filter_order)

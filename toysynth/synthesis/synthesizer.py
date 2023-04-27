@@ -9,6 +9,7 @@ from toysynth.communication import Mailbox
 import toysynth.synthesis.signal as signal
 import toysynth.midi as midi
 from toysynth.playback import PyAudioStreamPlayer
+import toysynth.synthesis.signal.utils as utils
 
 class Synthesizer(threading.Thread):
     def __init__(self, mailbox: Mailbox, sample_rate: int, frames_per_chunk: int, num_voices=8) -> None:
@@ -78,15 +79,17 @@ class Synthesizer(threading.Thread):
         mix = np.zeros(self.frames_per_chunk, np.float32)
         num_active_voices = 0
         while True:
-            for i in range(len(self.voices)): # will this keep the absolute time from updating in some generators? is that a problem?
+            for i in range(len(self.voices)):
                 voice = self.voices[i]
-                if voice.active == True:
+                (next_chunk, props) = next(voice.signal_chain)
+                mix += next_chunk
+                if not (next_chunk.max() == 0 and next_chunk.min() == 0): # if the chunk isn't all 0s that means it's active
                     # self.log.debug(f"Voice {i} is active")
                     num_active_voices += 1
-                mix += next(voice.signal_chain)
 
-            if num_active_voices > 0:
-                mix = mix / np.float32(num_active_voices)
+            if props["amp"] != 0:
+                mix = mix / np.float32(props["amp"])
+            
             mix.clip(-1.0, 1.0)
             
             yield mix

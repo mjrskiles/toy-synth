@@ -1,6 +1,7 @@
 import logging
 from typing import List
 from copy import deepcopy
+import random
 
 import numpy as np
 
@@ -9,7 +10,10 @@ from .signal_type import SignalType
 class Component():
     """
     Represents a base signal component. A signal component is an iterator.
-    The iterator should return an ndarray of size <frames_per_chunk> with type numpy.float32
+    The iterator should return a tuple of an (ndarray of size <frames_per_chunk> with type numpy.float32, props)
+    where props is a dictionary of properties related to the array.
+    Every component props dict must have 
+    - amp
     A component can have subcomponents, which should also be iterators.
 
     A component must implement
@@ -18,13 +22,15 @@ class Component():
     __deepcopy__
     """
 
-    def __init__(self, sample_rate, frames_per_chunk, signal_type: SignalType, subcomponents: List['Component']=[]):
+    def __init__(self, sample_rate, frames_per_chunk, signal_type: SignalType, subcomponents: List['Component']=[], name="Component"):
         self.log = logging.getLogger(__name__)
         self.sample_rate = sample_rate
         self.frames_per_chunk = frames_per_chunk
         self.subcomponents = subcomponents
         self.signal_type = signal_type
         self.active = False
+        self.name = name + "#" + str(random.randint(0, 999999))
+        self._props = {}
 
     def __iter__(self):
         return self

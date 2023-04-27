@@ -10,7 +10,7 @@ from .signal_type import SignalType
 
 class Chain(Component):
     def __init__(self, sample_rate, frames_per_chunk, root_component):
-        super().__init__(sample_rate, frames_per_chunk, signal_type=SignalType.WAVE)
+        super().__init__(sample_rate, frames_per_chunk, signal_type=SignalType.WAVE, name="Chain")
         self.log = logging.getLogger(__name__)
         self.sample_rate = sample_rate
         self.frames_per_chunk = frames_per_chunk
@@ -21,10 +21,11 @@ class Chain(Component):
         return self
     
     def __next__(self):
-        return next(self.root_iter)
+        (chunk, props) = next(self.root_iter)
+        return (chunk, props)
     
     def __deepcopy__(self, memo):
-        return Chain(self.sample_rate, self.frames_per_chunk, deepcopy(self.root_component))
+        return Chain(self.sample_rate, self.frames_per_chunk, deepcopy(self.root_component, memo))
     
     def get_components_by_class(self, cls):
         components = []

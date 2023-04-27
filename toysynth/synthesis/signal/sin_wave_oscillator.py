@@ -6,8 +6,8 @@ import numpy as np
 from .oscillator import Oscillator
 
 class SinWaveOscillator(Oscillator):
-    def __init__(self, sample_rate, frames_per_chunk):
-        super().__init__(sample_rate, frames_per_chunk)
+    def __init__(self, sample_rate, frames_per_chunk, name="SinWaveOscillator"):
+        super().__init__(sample_rate, frames_per_chunk, name=name)
         self.log = logging.getLogger(__name__)
 
     def __iter__(self):
@@ -22,9 +22,11 @@ class SinWaveOscillator(Oscillator):
         if not self.active or self.frequency <= 0.0:
             if self.frequency < 0.0:
                 self.log.error("Overriding negative frequency to 0")
+            self._props["amp"] = 0.0
             self._wave = np.zeros(self.frames_per_chunk)
         
         else:
+            self._props["amp"] = self.amplitude
             ts = np.linspace(self._chunk_start_time, self._chunk_end_time, self.frames_per_chunk, endpoint=False)
             self._wave = self.amplitude * np.sin(self.phase + (2 * np.pi * self.frequency) * ts)
 
@@ -32,7 +34,7 @@ class SinWaveOscillator(Oscillator):
         self._chunk_start_time = self._chunk_end_time
         self._chunk_end_time += self._chunk_duration
 
-        return self._wave.astype(np.float32)
+        return (self._wave.astype(np.float32), self._props)
     
     def __deepcopy__(self, memo):
         return SinWaveOscillator(self.sample_rate, self.frames_per_chunk)
