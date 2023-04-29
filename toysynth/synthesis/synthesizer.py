@@ -62,8 +62,8 @@ class Synthesizer(threading.Thread):
         return
 
     def setup_signal_chain(self):
-        osc_a = signal.SquareWaveOscillator(self.sample_rate, self.frames_per_chunk)
-        # osc_b = signal.SquareWaveOscillator(self.sample_rate, self.frames_per_chunk)
+        osc_a = signal.SinWaveOscillator(self.sample_rate, self.frames_per_chunk)
+        osc_b = signal.TriangleWaveOscillator(self.sample_rate, self.frames_per_chunk)
         # osc_b.set_phase_degrees(45)
 
         osc_mixer = signal.Mixer(self.sample_rate, self.frames_per_chunk, [osc_a])
@@ -79,16 +79,22 @@ class Synthesizer(threading.Thread):
         mix = np.zeros(self.frames_per_chunk, np.float32)
         num_active_voices = 0
         while True:
+            amp = np.float32(0.0)
             for i in range(len(self.voices)):
                 voice = self.voices[i]
                 (next_chunk, props) = next(voice.signal_chain)
                 mix += next_chunk
-                if not (next_chunk.max() == 0 and next_chunk.min() == 0): # if the chunk isn't all 0s that means it's active
+                chunk_amp = props["amp"]
+                amp += chunk_amp
+                if chunk_amp != 0: # if the chunk isn't all 0s that means it's active
                     # self.log.debug(f"Voice {i} is active")
                     num_active_voices += 1
 
-            if props["amp"] != 0:
-                mix = mix / np.float32(props["amp"])
+            # if num_active_voices != 0:
+            #     mix = mix / num_active_voices
+            # self.log.debug(f"amp: {amp}")
+            if amp > 1:
+                utils.normalize(mix)
             
             mix.clip(-1.0, 1.0)
             

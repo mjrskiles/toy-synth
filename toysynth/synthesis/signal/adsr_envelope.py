@@ -15,14 +15,14 @@ class AdsrEnvelope(Component):
         RELEASE = 2
 
     def __init__(self, sample_rate, frames_per_chunk, source: Component):
-        super().__init__(sample_rate, frames_per_chunk, signal_type=SignalType.WAVE, subcomponents=[], name="ADSREnvelope")
+        super().__init__(sample_rate, frames_per_chunk, signal_type=SignalType.WAVE, subcomponents=[], name="ADSR")
         self.log = logging.getLogger(__name__)
         self.add_subcomponent(source)
-        self._current_amplitude = 0.0
-        self._attack = np.float32(0.2)
+        self._current_amp = 0.0
+        self._attack = np.float32(0.5)
         self._decay = np.float32(0.3)
-        self._sustain = np.float32(0.5)
-        self._release = np.float32(0.5)
+        self._sustain = np.float32(0.3)
+        self._release = np.float32(1.5)
         self._iteration_number = 0
         self._sustain_frames_num = self.frames_per_chunk * 2
         self._target_amp = 1.0
@@ -35,7 +35,7 @@ class AdsrEnvelope(Component):
     def __iter__(self):
         self.source_iter = iter(self.subcomponents[0])
         self._stage_trig_time = time.time()
-        self._props["amp"] = self._current_amplitude
+        self._props["amp"] = self._current_amp
         return self
     
     def __next__(self):
@@ -53,7 +53,7 @@ class AdsrEnvelope(Component):
                 ramp_chunk = self._ads_ramp[ramp_index:end_index]
                 source_chunk = source_chunk * ramp_chunk
                 # self.log.debug(f"Ramp chunk:\n{ramp_chunk}")
-                self._current_amplitude = ramp_chunk[-1]
+                self._current_amp = ramp_chunk[-1]
 
                 now = time.time()
                 elapsed = now - self._stage_trig_time
@@ -64,7 +64,7 @@ class AdsrEnvelope(Component):
                     self.calculate_r_ramp()
                     self.log.debug(f"{self.name}: Triggered release state after {elapsed}s")
 
-                self._props["amp"] = self._current_amplitude
+                self._props["amp"] = self._current_amp
                 return (source_chunk, self._props)
 
             case AdsrEnvelope.State.RELEASE:
@@ -85,7 +85,10 @@ class AdsrEnvelope(Component):
                 else:
                     end_index = ramp_index + self.frames_per_chunk
                     ramp_chunk = self._r_ramp[ramp_index:end_index]
+                self._current_amp = ramp_chunk[-1]
+
                 source_chunk = source_chunk * ramp_chunk
+                self._props["amp"] = self._current_amp
                 return (source_chunk, self._props)
             case AdsrEnvelope.State.IDLE:
                 if self.active:
@@ -189,7 +192,7 @@ class AdsrEnvelope(Component):
     def calculate_r_ramp(self):
         release_frames = int(self.sample_rate * self.release)
         self._release_index = self._sustain_index + (self._sustain_frames_num)
-        self._r_ramp = np.linspace(self._current_amplitude, 0, release_frames, endpoint=True)
+        self._r_ramp = np.linspace(self._current_amp, 0, release_frames, endpoint=True)
 
 
     def trigger_attack(self):
