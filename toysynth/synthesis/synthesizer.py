@@ -18,7 +18,6 @@ class Synthesizer(threading.Thread):
         self.mailbox = mailbox
         self.sample_rate = sample_rate
         self.frames_per_chunk = frames_per_chunk
-
         self.signal_chain_prototype = self.setup_signal_chain()
         self.voices = [Voice(deepcopy(self.signal_chain_prototype)) for _ in range(num_voices)]
 
@@ -62,11 +61,11 @@ class Synthesizer(threading.Thread):
         return
 
     def setup_signal_chain(self):
-        osc_a = signal.SinWaveOscillator(self.sample_rate, self.frames_per_chunk)
+        osc_a = signal.SawtoothWaveOscillator(self.sample_rate, self.frames_per_chunk)
         osc_b = signal.TriangleWaveOscillator(self.sample_rate, self.frames_per_chunk)
         # osc_b.set_phase_degrees(45)
 
-        osc_mixer = signal.Mixer(self.sample_rate, self.frames_per_chunk, [osc_a])
+        osc_mixer = signal.Mixer(self.sample_rate, self.frames_per_chunk, [osc_a, osc_b])
 
         lpf = signal.LowPassFilter(self.sample_rate, self.frames_per_chunk, osc_mixer, 8000.0)
 
@@ -112,15 +111,20 @@ class Synthesizer(threading.Thread):
         return note_id
 
     def note_on(self, note: int, id):
-        for voice in self.voices:
+        for i in range(len(self.voices)):
+            voice = self.voices[i]
             if not voice.active:
+                self.log.debug(f"Setting voice {i} note_on with note {note}, id {id}")
                 freq = midi.frequencies[note]
                 voice.note_on(freq, id)
                 break
 
+
     def note_off(self, id):
-        for voice in self.voices:
+        for i in range(len(self.voices)):
+            voice = self.voices[i]
             if voice.active and voice.id == id:
+                self.log.debug(f"Setting voice {i} note_off with id {id}")
                 voice.note_off()
 
     def set_cutoff_frequency(self, cutoff):
@@ -128,18 +132,43 @@ class Synthesizer(threading.Thread):
             voice.signal_chain.set_filter_cutoff(cutoff)
 
 
+# class Voice:
+#     def __init__(self, signal_chain: signal.Chain):
+#         self.signal_chain = iter(signal_chain)
+#         self.active = False
+#         self.id = None
+
+#     def note_on(self, frequency, id):
+#         if not self.active:
+#             self.active = True
+#             self.id = id
+#             self.signal_chain.note_on(frequency)
+
+#     def note_off(self):
+#         if self.active:
+#             self.signal_chain.note_off()
+
+#     def is_silent(self):
+#         return self.signal_chain.is_silent()
+
 class Voice:
     def __init__(self, signal_chain: signal.Chain):
         self.signal_chain = iter(signal_chain)
-        self.active = False
+        self._active = False
         self.id = None
 
+    @property
+    def active(self):
+        # Update the active status based on the is_silent() method of the ADSR envelope
+        if self._active and self.signal_chain.is_silent():
+            self._active = False
+        return self._active
+
     def note_on(self, frequency, id):
-        if not self.active:
-            self.active = True
+        if not self._active:
+            self._active = True
             self.id = id
             self.signal_chain.note_on(frequency)
 
     def note_off(self):
-        self.active = False
         self.signal_chain.note_off()

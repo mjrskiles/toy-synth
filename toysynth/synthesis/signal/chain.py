@@ -40,14 +40,19 @@ class Chain(Component):
         return components
     
     def note_on(self, frequency):
+        self.active = True
         self.subcomponents[0].active = True
         for component in self.get_components_by_class(Oscillator):
             component.frequency = frequency
 
     def note_off(self):
         # Setting the root component active to False should propagate down the tree
+        self.active = False
         self.subcomponents[0].active = False
 
     def set_filter_cutoff(self, cutoff):
         for lpf in self.get_components_by_class(LowPassFilter):
             lpf.cutoff_frequency = np.float32(cutoff)
+
+    def is_silent(self):
+        return self.subcomponents[0].is_silent() # This only works for ADSR env right now TODO fix it

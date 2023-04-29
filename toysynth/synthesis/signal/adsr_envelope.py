@@ -22,7 +22,7 @@ class AdsrEnvelope(Component):
         self._attack = np.float32(0.5)
         self._decay = np.float32(0.3)
         self._sustain = np.float32(0.3)
-        self._release = np.float32(1.5)
+        self._release = np.float32(0.5)
         self._iteration_number = 0
         self._sustain_frames_num = self.frames_per_chunk * 2
         self._target_amp = 1.0
@@ -91,6 +91,8 @@ class AdsrEnvelope(Component):
                 self._props["amp"] = self._current_amp
                 return (source_chunk, self._props)
             case AdsrEnvelope.State.IDLE:
+                if self.subcomponents[0].active:
+                    self.subcomponents[0].active = False
                 if self.active:
                     self.trigger_attack()
                 self._props["amp"] = 0.0
@@ -202,3 +204,6 @@ class AdsrEnvelope(Component):
         for sub in self.subcomponents:
             sub.active = True
         self.log.info(f"{self.name}: Triggered attack stage")
+
+    def is_silent(self):
+        return self.state == self.State.IDLE and not self.active
