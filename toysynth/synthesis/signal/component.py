@@ -101,3 +101,17 @@ class Component():
 
         normalized_signal = 2 * (signal - min_val) / (max_val - min_val) - 1
         return normalized_signal
+    
+    def get_subcomponents_str(self, component, depth):
+        ret_str = ""
+        for i in range(depth):
+            ret_str += "  "
+        ret_str += f"{component.name}\n"    
+        if hasattr(component, "subcomponents") and len(component.subcomponents) > 0:
+            for subcomponent in component.subcomponents:
+                ret_str += self.get_subcomponents_str(subcomponent, depth + 1)
+        return ret_str
+    
+    def __str__(self):
+        ret_str = self.get_subcomponents_str(self, 0)
+        return ret_str

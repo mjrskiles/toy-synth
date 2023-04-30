@@ -19,9 +19,9 @@ class AdsrEnvelope(Component):
         self.log = logging.getLogger(__name__)
         self.add_subcomponent(source)
         self._current_amp = 0.0
-        self._attack = np.float32(0.5)
+        self._attack = np.float32(0.1)
         self._decay = np.float32(0.3)
-        self._sustain = np.float32(0.3)
+        self._sustain = np.float32(0.7)
         self._release = np.float32(0.5)
         self._iteration_number = 0
         self._sustain_frames_num = self.frames_per_chunk * 2

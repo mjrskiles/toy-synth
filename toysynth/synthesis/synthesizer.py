@@ -19,6 +19,7 @@ class Synthesizer(threading.Thread):
         self.sample_rate = sample_rate
         self.frames_per_chunk = frames_per_chunk
         self.signal_chain_prototype = self.setup_signal_chain()
+        self.log.info(f"Signal Chain Prototype:\n{str(self.signal_chain_prototype)}")
         self.voices = [Voice(deepcopy(self.signal_chain_prototype)) for _ in range(num_voices)]
 
         self.stream_player = PyAudioStreamPlayer(sample_rate, frames_per_chunk, self.generator())
@@ -61,8 +62,8 @@ class Synthesizer(threading.Thread):
         return
 
     def setup_signal_chain(self):
-        osc_a = signal.SawtoothWaveOscillator(self.sample_rate, self.frames_per_chunk)
-        osc_b = signal.TriangleWaveOscillator(self.sample_rate, self.frames_per_chunk)
+        osc_a = signal.TriangleWaveOscillator(self.sample_rate, self.frames_per_chunk)
+        osc_b = signal.SawtoothWaveOscillator(self.sample_rate, self.frames_per_chunk)
         # osc_b.set_phase_degrees(45)
 
         osc_mixer = signal.Mixer(self.sample_rate, self.frames_per_chunk, [osc_a, osc_b])
