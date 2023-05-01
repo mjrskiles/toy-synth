@@ -55,4 +55,4 @@ class Chain(Component):
             lpf.cutoff_frequency = np.float32(cutoff)
 
     def is_silent(self):
-        return self.subcomponents[0].is_silent() # This only works for ADSR env right now TODO fix it
+        return self.subcomponents[0].is_silent()

@@ -102,6 +102,9 @@ class Component():
         normalized_signal = 2 * (signal - min_val) / (max_val - min_val) - 1
         return normalized_signal
     
+    def is_silent(self):
+        return not self.active
+    
     def get_subcomponents_str(self, component, depth):
         ret_str = ""
         for i in range(depth):

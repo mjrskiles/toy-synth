@@ -2,6 +2,7 @@ import logging
 import threading
 from copy import deepcopy
 import hashlib
+from enum import Enum
 
 import numpy as np
 
@@ -12,6 +13,10 @@ from toysynth.playback import PyAudioStreamPlayer
 import toysynth.synthesis.signal.utils as utils
 
 class Synthesizer(threading.Thread):
+    class Mode(Enum):
+        MONO = 0
+        POLY = 1
+
     def __init__(self, mailbox: Mailbox, sample_rate: int, frames_per_chunk: int, num_voices=8) -> None:
         super().__init__(name="Synthesizer")
         self.log = logging.getLogger(__name__)
@@ -21,8 +26,9 @@ class Synthesizer(threading.Thread):
         self.signal_chain_prototype = self.setup_signal_chain()
         self.log.info(f"Signal Chain Prototype:\n{str(self.signal_chain_prototype)}")
         self.voices = [Voice(deepcopy(self.signal_chain_prototype)) for _ in range(num_voices)]
-
+        self.cutoff_vals = np.logspace(4, 14, 128, endpoint=True, base=2, dtype=np.float32) # 2^14=16384 : that is the highest possible cutoff value
         self.stream_player = PyAudioStreamPlayer(sample_rate, frames_per_chunk, self.generator())
+        self.mode = Synthesizer.Mode.POLY
 
 
     def run(self):
@@ -40,30 +46,52 @@ class Synthesizer(threading.Thread):
                         int_note = int(note)
                         chan = int(channel)
                         note_name = midi.note_names[int_note]
-                        note_id = self.get_note_id(int_note, chan)
-                        self.note_on(int_note, note_id)
-                        self.log.info(f"Note on {note_name} ({int_note}), chan {chan}")
+                        if chan < len(self.voices):
+                            self.note_on(int_note, chan)
+                            self.log.info(f"Note on {note_name} ({int_note}), chan {chan}")
                     case ["note_off", "-n", note, "-c", channel]:
                         int_note = int(note)
                         chan = int(channel)
                         note_name = midi.note_names[int(note)]
-                        note_id = self.get_note_id(int_note, chan)
-                        self.note_off(note_id)
-                        self.log.info(f"Note off {note_name} ({int_note}), chan {chan}")
-                    case ["control_change", "-c", channel, "-n", "74", "-v", control_val]:
-                        chan = int(channel)
-                        # cc_num = int(control_num)
-                        cc_val = int(control_val)
-                        cutoff_vals = np.logspace(4, 14, 128, endpoint=True, base=2, dtype=np.float32) # 2^14=16384 : that is the highest possible cutoff value
-                        self.set_cutoff_frequency(cutoff_vals[cc_val])
-                        self.log.info(f"LPF Cutoff: {cutoff_vals[cc_val]}")
+                        if chan < len(self.voices):
+                            self.note_off(int_note, chan)
+                            self.log.info(f"Note off {note_name} ({int_note}), chan {chan}")
+                    case ["control_change", "-c", channel, "-n", cc_num, "-v", control_val]:
+                        if cc_num == "74":
+                            chan = int(channel)
+                            # cc_num = int(control_num)
+                            cc_val = int(control_val)
+                            self.set_cutoff_frequency(self.cutoff_vals[cc_val])
+                            self.log.info(f"LPF Cutoff: {self.cutoff_vals[cc_val]}")
+
+                        elif cc_num == "126":
+                            self.mode = Synthesizer.Mode.MONO
+                            self.log.info(f"Set synth mode to MONO")
+                        elif cc_num == "127":
+                            self.mode = Synthesizer.Mode.POLY
+                            self.log.info(f"Set synth mode to POLY")
                     case _:
                         self.log.info(f"Matched unknown command: {message}")
         return
+    
+    @property
+    def mode(self):
+        """Mono/Poly mode"""
+        return self._mode
+    
+    @mode.setter
+    def mode(self, val):
+        try:
+            if isinstance(val, Synthesizer.Mode):
+                self._mode = val
+            else:
+                raise ValueError
+        except ValueError:
+            self.log.debug(f"Couldn't set Synthesizer mode with value {val}")
 
     def setup_signal_chain(self):
-        osc_a = signal.TriangleWaveOscillator(self.sample_rate, self.frames_per_chunk)
-        osc_b = signal.SawtoothWaveOscillator(self.sample_rate, self.frames_per_chunk)
+        osc_a = signal.SawtoothWaveOscillator(self.sample_rate, self.frames_per_chunk)
+        osc_b = signal.TriangleWaveOscillator(self.sample_rate, self.frames_per_chunk)
         # osc_b.set_phase_degrees(45)
 
         osc_mixer = signal.Mixer(self.sample_rate, self.frames_per_chunk, [osc_a, osc_b])
@@ -110,47 +138,42 @@ class Synthesizer(threading.Thread):
         """
         note_id = hash(f"{note}{chan}")
         return note_id
-
-    def note_on(self, note: int, id):
+    
+    def note_on_mono(self, note: int, chan: int):
+        note_id = self.get_note_id(note, chan)
+        self.log.debug(f"[mono] Setting voice {chan} note_on with note {note}, id {note_id}")
+        freq = midi.frequencies[note]
+        self.voices[chan].note_on(freq, note_id)
+    
+    def note_on_poly(self, note: int, chan: int):
+        note_id = self.get_note_id(note, chan)
         for i in range(len(self.voices)):
             voice = self.voices[i]
             if not voice.active:
-                self.log.debug(f"Setting voice {i} note_on with note {note}, id {id}")
+                self.log.debug(f"[poly] Setting voice {i} note_on with note {note}, id {note_id}")
                 freq = midi.frequencies[note]
-                voice.note_on(freq, id)
+                voice.note_on(freq, note_id)
                 break
 
+    def note_on(self, note: int, chan: int):
+        if self.mode == Synthesizer.Mode.MONO:
+            self.note_on_mono(note, chan)
+        else:
+            self.note_on_poly(note, chan)
 
-    def note_off(self, id):
+
+    def note_off(self, note: int, chan: int):
+        note_id = self.get_note_id(note, chan)
         for i in range(len(self.voices)):
             voice = self.voices[i]
-            if voice.active and voice.id == id:
-                self.log.debug(f"Setting voice {i} note_off with id {id}")
+            if voice.active and voice.id == note_id:
+                self.log.debug(f"Setting voice {i} note_off with id {note_id}")
                 voice.note_off()
 
     def set_cutoff_frequency(self, cutoff):
         for voice in self.voices:
             voice.signal_chain.set_filter_cutoff(cutoff)
 
-
-# class Voice:
-#     def __init__(self, signal_chain: signal.Chain):
-#         self.signal_chain = iter(signal_chain)
-#         self.active = False
-#         self.id = None
-
-#     def note_on(self, frequency, id):
-#         if not self.active:
-#             self.active = True
-#             self.id = id
-#             self.signal_chain.note_on(frequency)
-
-#     def note_off(self):
-#         if self.active:
-#             self.signal_chain.note_off()
-
-#     def is_silent(self):
-#         return self.signal_chain.is_silent()
 
 class Voice:
     def __init__(self, signal_chain: signal.Chain):
@@ -166,10 +189,9 @@ class Voice:
         return self._active
 
     def note_on(self, frequency, id):
-        if not self._active:
-            self._active = True
-            self.id = id
-            self.signal_chain.note_on(frequency)
+        self._active = True
+        self.id = id
+        self.signal_chain.note_on(frequency)
 
     def note_off(self):
         self.signal_chain.note_off()

@@ -26,7 +26,7 @@ class SawtoothWaveOscillator(Oscillator):
             p = 1/self.frequency #calculate the period for the formula
             ts = np.linspace(self._chunk_start_time, self._chunk_end_time, self.frames_per_chunk, endpoint=False)
             
-            self._wave = 2 * ((ts - (p + 4 * self.phase) / 4) % p) / p - 1
+            self._wave = 2 * ((ts + self.phase * p) % p) / p - 1
 
         # Update the state variables for next time
         self._chunk_start_time = self._chunk_end_time

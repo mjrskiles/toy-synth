@@ -26,7 +26,6 @@ class TriangleWaveOscillator(Oscillator):
             p = 1/self.frequency #calculate the period for the formula
             ts = np.linspace(self._chunk_start_time, self._chunk_end_time, self.frames_per_chunk, endpoint=False)
             
-            # Use NumPy vectorized operations to calculate the triangle wave
             self._wave = 4 * self.amplitude / p * np.abs(((ts - (p + 4 * self.phase) / 4) % p) - p / 2) - self.amplitude
 
             # Update the state variables for next time

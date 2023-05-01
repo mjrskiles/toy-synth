@@ -17,7 +17,13 @@ class MidiPlayer(threading.Thread):
     def play_file(self, file_path):
         try:
             midi_file = mido.MidiFile(file_path)
+
+            # Send a message to the synth to play in either mono or poly mode depending on the midi file type
             self.log.info(f"Opened MIDI file type {midi_file.type}")
+            cc_num = 127 if midi_file.type == 0 else 126
+            mono_poly_msg = mido.Message("control_change", channel=0, control=cc_num, value=0)
+            self.port.send(mono_poly_msg)
+            
             for msg in midi_file.play():
                 self.port.send(msg)
         except Exception as err:
