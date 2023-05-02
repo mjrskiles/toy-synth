@@ -25,4 +25,8 @@ name = "midi file player"
 path = "toy/midi/player"
 
 [midi]
-player_port_name = "Toy Synth MIDI Player"
+player_port_name = "toy synth MIDI player"
+
+auto_attach = [
+    "MPK mini 3"
+]

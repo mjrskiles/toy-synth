@@ -4,7 +4,7 @@ import sys
 
 from .configuration import SettingsReader
 from .communication import MQTTListener, Mailbox
-from .midi import MidiPlayer, MidiListener
+from .midi import MidiPlayer, MidiListener, get_available_controllers
 from .synthesis import Synthesizer
 
 if __name__ == "__main__":
@@ -25,7 +25,7 @@ if __name__ == "__main__":
     # Set up the command queues
     main_mailbox = Mailbox()
     synthesizer_mailbox = Mailbox()
-    midi_listener_mailbox = Mailbox()
+    midi_player_listener_mailbox = Mailbox()
     midi_player_mailbox = Mailbox()
 
     # Set up the Synth
@@ -43,16 +43,29 @@ if __name__ == "__main__":
     mqtt_listener = MQTTListener(mqtt_host, mqtt_port, topics, {"toy/synth/test/command": synthesizer_mailbox, "toy/exit": main_mailbox, "toy/midi/player": midi_player_mailbox})
 
     # Create the MIDI threads
-    player_port_name = settings.data['midi']['player_port_name']
-    midi_listener = MidiListener(midi_listener_mailbox, synthesizer_mailbox, player_port_name)
-    midi_player = MidiPlayer(midi_player_mailbox, player_port_name)
+    #   Open the MIDI file player
+    port_name = settings.data['midi']['player_port_name']
+    midi_player_listener = MidiListener(midi_player_listener_mailbox, synthesizer_mailbox, port_name)
+    midi_player = MidiPlayer(midi_player_mailbox, port_name)
+
+    #   Open listeners for any pre-configured controllers
+    auto_attach_list = settings.data['midi']['auto_attach']
+    log.debug(f"Auto Controllers: {auto_attach_list}")
+    available_controllers = get_available_controllers()
+    log.debug(f"Available Controllers: {available_controllers}")
+    controllers = [controller for controller in auto_attach_list if controller in available_controllers]
+    log.debug(f"Controllers: {controllers}")
+    listener_mailboxes = [Mailbox() for _ in controllers]
+    midi_listeners = [MidiListener(listener_mailboxes[i], synthesizer_mailbox, controllers[i]) for i in range(len(controllers))]
 
     try:
         # Start the threads
         toy_synth.start()
         mqtt_listener.start()
         midi_player.start()
-        midi_listener.start()
+        midi_player_listener.start()
+        for listener in midi_listeners:
+            listener.start()
 
         # main thread loop
         should_run = True
@@ -70,11 +83,15 @@ if __name__ == "__main__":
     # Send the exit command to the various threads
     synthesizer_mailbox.put("exit")
     midi_player_mailbox.put("exit")
-    midi_listener_mailbox.put("exit")
+    midi_player_listener_mailbox.put("exit")
+    for mailbox in listener_mailboxes:
+        mailbox.put("exit")
 
     toy_synth.join()
     mqtt_listener.stop()
     mqtt_listener.join()
     midi_player.join()
-    midi_listener.join()
+    midi_player_listener.join()
+    for listener in midi_listeners:
+        listener.join()
     sys.exit(0)

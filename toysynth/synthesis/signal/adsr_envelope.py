@@ -19,10 +19,10 @@ class AdsrEnvelope(Component):
         self.log = logging.getLogger(__name__)
         self.add_subcomponent(source)
         self._current_amp = 0.0
-        self._attack = np.float32(0.1)
-        self._decay = np.float32(0.3)
-        self._sustain = np.float32(0.7)
-        self._release = np.float32(0.5)
+        self._attack = np.float32(0.0)
+        self._decay = np.float32(0.0)
+        self._sustain = np.float32(1.0)
+        self._release = np.float32(0.0)
         self._iteration_number = 0
         self._sustain_frames_num = self.frames_per_chunk * 2
         self._target_amp = 1.0
@@ -62,7 +62,7 @@ class AdsrEnvelope(Component):
                     self._stage_trig_time = time.time()
                     self._iteration_number = 0
                     self.calculate_r_ramp()
-                    self.log.debug(f"{self.name}: Triggered release state after {elapsed}s")
+                    # self.log.debug(f"{self.name}: Triggered release state after {elapsed}s")
 
                 self._props["amp"] = self._current_amp
                 return (source_chunk, self._props)
@@ -79,7 +79,7 @@ class AdsrEnvelope(Component):
                     partial_chunk = self._r_ramp[ramp_index:]
                     zeros = np.zeros((self.frames_per_chunk - len(partial_chunk)), dtype=np.float32)
                     ramp_chunk = np.concatenate([partial_chunk, zeros], axis=0)
-                    self.log.debug(f"{self.name}: End of Release Ramp after {elapsed}s")
+                    # self.log.debug(f"{self.name}: End of Release Ramp after {elapsed}s")
                     if not self.active:
                         self.state = AdsrEnvelope.State.IDLE
                 else:
@@ -203,7 +203,7 @@ class AdsrEnvelope(Component):
         self._iteration_number = 0
         for sub in self.subcomponents:
             sub.active = True
-        self.log.info(f"{self.name}: Triggered attack stage")
+        # self.log.info(f"{self.name}: Triggered attack stage")
 
     def is_silent(self):
         return self.state == self.State.IDLE and not self.active

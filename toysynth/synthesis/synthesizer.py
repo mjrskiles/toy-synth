@@ -27,6 +27,9 @@ class Synthesizer(threading.Thread):
         self.log.info(f"Signal Chain Prototype:\n{str(self.signal_chain_prototype)}")
         self.voices = [Voice(deepcopy(self.signal_chain_prototype)) for _ in range(num_voices)]
         self.cutoff_vals = np.logspace(4, 14, 128, endpoint=True, base=2, dtype=np.float32) # 2^14=16384 : that is the highest possible cutoff value
+        self.envelope_adr_vals = np.logspace(-6, 4, 128, endpoint=True, base=2, dtype=np.float32)
+        self.envelope_adr_vals[0] = np.float32(0) # the logspace function will only produce a really small first number. We want 0.
+        self.envelope_s_vals = np.linspace(0, 1, 128, endpoint=True, dtype=np.float32)
         self.stream_player = PyAudioStreamPlayer(sample_rate, frames_per_chunk, self.generator())
         self.mode = Synthesizer.Mode.POLY
 
@@ -57,9 +60,36 @@ class Synthesizer(threading.Thread):
                             self.note_off(int_note, chan)
                             self.log.info(f"Note off {note_name} ({int_note}), chan {chan}")
                     case ["control_change", "-c", channel, "-n", cc_num, "-v", control_val]:
+                        if cc_num == "20":
+                            cc_val = int(control_val)
+                            if cc_val != 0 and self.mode == Synthesizer.Mode.MONO:
+                                self.mode = Synthesizer.Mode.POLY
+                                self.log.info(f"Set synth mode to POLY")
+                            elif cc_val != 0:
+                                self.mode = Synthesizer.Mode.MONO
+                                self.log.info(f"Set synth mode to MONO")
+                        if cc_num == "70":
+                            cc_val = int(control_val)
+                            lookup_val = self.envelope_adr_vals[cc_val]
+                            self.set_attack(lookup_val)
+                            self.log.info(f"Attack: {lookup_val}")
+                        if cc_num == "71":
+                            cc_val = int(control_val)
+                            lookup_val = self.envelope_adr_vals[cc_val]
+                            self.set_decay(lookup_val)
+                            self.log.info(f"Decay: {lookup_val}")
+                        if cc_num == "72":
+                            cc_val = int(control_val)
+                            lookup_val = self.envelope_s_vals[cc_val]
+                            self.set_sustain(lookup_val)
+                            self.log.info(f"Sustain: {lookup_val}")
+                        if cc_num == "73":
+                            cc_val = int(control_val)
+                            lookup_val = self.envelope_adr_vals[cc_val]
+                            self.set_release(lookup_val)
+                            self.log.info(f"Release: {lookup_val}")
                         if cc_num == "74":
                             chan = int(channel)
-                            # cc_num = int(control_num)
                             cc_val = int(control_val)
                             self.set_cutoff_frequency(self.cutoff_vals[cc_val])
                             self.log.info(f"LPF Cutoff: {self.cutoff_vals[cc_val]}")
@@ -155,6 +185,9 @@ class Synthesizer(threading.Thread):
                 voice.note_on(freq, note_id)
                 break
 
+            if i == len(self.voices) - 1:
+                self.log.debug(f"Had no unused voices!")
+
     def note_on(self, note: int, chan: int):
         if self.mode == Synthesizer.Mode.MONO:
             self.note_on_mono(note, chan)
@@ -173,6 +206,22 @@ class Synthesizer(threading.Thread):
     def set_cutoff_frequency(self, cutoff):
         for voice in self.voices:
             voice.signal_chain.set_filter_cutoff(cutoff)
+
+    def set_attack(self, attack):
+        for voice in self.voices:
+            voice.signal_chain.set_attack(attack)
+
+    def set_decay(self, decay):
+        for voice in self.voices:
+            voice.signal_chain.set_decay(decay)
+
+    def set_sustain(self, sustain):
+        for voice in self.voices:
+            voice.signal_chain.set_sustain(sustain)
+
+    def set_release(self, release):
+        for voice in self.voices:
+            voice.signal_chain.set_release(release)
 
 
 class Voice:

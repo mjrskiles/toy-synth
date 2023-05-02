@@ -6,6 +6,7 @@ import numpy as np
 from .component import Component
 from .oscillator import Oscillator
 from .low_pass_filter import LowPassFilter
+from .adsr_envelope import AdsrEnvelope
 from .signal_type import SignalType
 
 class Chain(Component):
@@ -53,6 +54,22 @@ class Chain(Component):
     def set_filter_cutoff(self, cutoff):
         for lpf in self.get_components_by_class(LowPassFilter):
             lpf.cutoff_frequency = np.float32(cutoff)
+
+    def set_attack(self, attack):
+        for env in self.get_components_by_class(AdsrEnvelope):
+            env.attack = attack
+
+    def set_decay(self, decay):
+        for env in self.get_components_by_class(AdsrEnvelope):
+            env.decay = decay
+
+    def set_sustain(self, sustain):
+        for env in self.get_components_by_class(AdsrEnvelope):
+            env.sustain = sustain
+
+    def set_release(self, release):
+        for env in self.get_components_by_class(AdsrEnvelope):
+            env.release = release
 
     def is_silent(self):
         return self.subcomponents[0].is_silent()

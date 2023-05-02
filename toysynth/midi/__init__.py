@@ -1,5 +1,10 @@
+import mido
+
 from .midi_listener import MidiListener
 from .midi_player import MidiPlayer
+
+def get_available_controllers():
+    return mido.get_input_names()
 
 frequencies = [
     8.176,8.662,9.177,9.723,

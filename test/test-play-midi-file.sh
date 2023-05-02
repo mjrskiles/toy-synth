@@ -8,15 +8,18 @@ play() {
     mosquitto_pub -t "toy/midi/player" -m "play -f ${file}"
 }
 
+quit() {
+    mosquitto_pub -t "toy/exit" -m "exit"
+}
+
 source ./venv/bin/activate
 (python -m toysynth)&
-pid=$!
 
-sleep 1
+sleep 3
 
 play
 
 sleep 300
 
-echo "Killing $!"
-kill $pid
+echo "Sending shutdown command to toy synth"
+quit

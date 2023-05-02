@@ -8,17 +8,17 @@ import toysynth.communication.message_builder as mb
 from toysynth.communication import Mailbox
 
 class MidiListener(threading.Thread):
-    def __init__(self, mailbox: Mailbox, controller_mailbox: Mailbox, player_port_name):
-        super().__init__()
+    def __init__(self, mailbox: Mailbox, controller_mailbox: Mailbox, port_name):
+        super().__init__(name=f"{port_name}-listener")
         self.log = logging.getLogger(__name__)
         self.mailbox = mailbox
         self.controller_mailbox = controller_mailbox
-        self.player_port_name = player_port_name
+        self.port_name = port_name
     
     def run(self):
         should_run = True
-        # inport = mido.open_input(self.player_port_name)
-        inport = mido.open_input("MPK mini 3")
+        inport = mido.open_input(self.port_name)
+        self.log.info(f"Opened port {self.port_name}")
         self.log.info(f"Available MIDI input ports: {mido.get_input_names()}")
         while should_run:
             if msg := inport.receive():
