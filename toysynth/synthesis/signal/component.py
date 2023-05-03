@@ -72,7 +72,9 @@ class Component():
     @property
     def active(self):
         """
-        The active status. If a component is active it should do its job, otherwise act as a bypass.
+        The active status.
+        When a component is active it should perform its function
+        When it is inactive it should either return zeros or bypass the signal.
         If the component is a generator it should generate zeros when inactive.
         """
         return self._active
@@ -107,7 +109,7 @@ class Component():
     
     def get_subcomponents_str(self, component, depth):
         ret_str = ""
-        for i in range(depth):
+        for _ in range(depth):
             ret_str += "  "
         ret_str += f"{component.name}\n"    
         if hasattr(component, "subcomponents") and len(component.subcomponents) > 0:

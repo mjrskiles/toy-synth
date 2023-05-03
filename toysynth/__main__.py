@@ -50,11 +50,9 @@ if __name__ == "__main__":
 
     #   Open listeners for any pre-configured controllers
     auto_attach_list = settings.data['midi']['auto_attach']
-    log.debug(f"Auto Controllers: {auto_attach_list}")
     available_controllers = get_available_controllers()
     log.debug(f"Available Controllers: {available_controllers}")
     controllers = [controller for controller in auto_attach_list if controller in available_controllers]
-    log.debug(f"Controllers: {controllers}")
     listener_mailboxes = [Mailbox() for _ in controllers]
     midi_listeners = [MidiListener(listener_mailboxes[i], synthesizer_mailbox, controllers[i]) for i in range(len(controllers))]
 

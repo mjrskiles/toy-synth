@@ -19,7 +19,6 @@ class MidiListener(threading.Thread):
         should_run = True
         inport = mido.open_input(self.port_name)
         self.log.info(f"Opened port {self.port_name}")
-        self.log.info(f"Available MIDI input ports: {mido.get_input_names()}")
         while should_run:
             if msg := inport.receive():
                 match msg.type:

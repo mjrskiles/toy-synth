@@ -21,7 +21,11 @@ class ConstantValueGenerator(Generator):
     @value.setter
     def value(self, new_value):
         try:
-            self._value = float(new_value)
+            float_value = float(new_value)
+            if float_value >= -1.0 and float_value <= 1.0:
+                self._value = float_value
+            else:
+                raise ValueError(f"Value {new_value} is not between -1.0 and 1.0")
         except ValueError:
             self.log.error(f"Unable to set with value {new_value}")
 

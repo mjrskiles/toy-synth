@@ -27,12 +27,12 @@ class Synthesizer(threading.Thread):
         self.log.info(f"Signal Chain Prototype:\n{str(self.signal_chain_prototype)}")
         self.voices = [Voice(deepcopy(self.signal_chain_prototype)) for _ in range(num_voices)]
         self.cutoff_vals = np.logspace(4, 14, 128, endpoint=True, base=2, dtype=np.float32) # 2^14=16384 : that is the highest possible cutoff value
-        self.envelope_adr_vals = np.logspace(-6, 4, 128, endpoint=True, base=2, dtype=np.float32)
-        self.envelope_adr_vals[0] = np.float32(0) # the logspace function will only produce a really small first number. We want 0.
-        self.envelope_s_vals = np.linspace(0, 1, 128, endpoint=True, dtype=np.float32)
+        self.envelope_adr_vals = np.logspace(0, 1, 128, endpoint=True, base=10, dtype=np.float32) - 1 # range is from 0-9
+        logspaced = np.logspace(0, 1, 128, endpoint=True, dtype=np.float32) # range is from 1-10
+        self.envelope_s_vals = (logspaced - 1) / (10 - 1) # range is from 0-1
         self.stream_player = PyAudioStreamPlayer(sample_rate, frames_per_chunk, self.generator())
         self.mode = Synthesizer.Mode.POLY
-
+        
 
     def run(self):
         self.stream_player.play()
@@ -171,22 +171,27 @@ class Synthesizer(threading.Thread):
     
     def note_on_mono(self, note: int, chan: int):
         note_id = self.get_note_id(note, chan)
-        self.log.debug(f"[mono] Setting voice {chan} note_on with note {note}, id {note_id}")
+        # self.log.debug(f"[mono] Setting voice {chan} note_on with note {note}, id {note_id}")
         freq = midi.frequencies[note]
         self.voices[chan].note_on(freq, note_id)
     
     def note_on_poly(self, note: int, chan: int):
         note_id = self.get_note_id(note, chan)
+        freq = midi.frequencies[note]
         for i in range(len(self.voices)):
             voice = self.voices[i]
             if not voice.active:
-                self.log.debug(f"[poly] Setting voice {i} note_on with note {note}, id {note_id}")
-                freq = midi.frequencies[note]
+                # self.log.debug(f"[poly] Setting voice {i} note_on with note {note}, id {note_id}")
                 voice.note_on(freq, note_id)
+                self.voices.append(self.voices.pop(i)) # Move this voice to the back of the list. It should be popped last
                 break
 
             if i == len(self.voices) - 1:
                 self.log.debug(f"Had no unused voices!")
+                self.voices[0].note_off()
+                self.voices[0].note_on(freq, note_id)
+                self.voices.append(self.voices.pop(0))
+
 
     def note_on(self, note: int, chan: int):
         if self.mode == Synthesizer.Mode.MONO:
@@ -200,7 +205,7 @@ class Synthesizer(threading.Thread):
         for i in range(len(self.voices)):
             voice = self.voices[i]
             if voice.active and voice.id == note_id:
-                self.log.debug(f"Setting voice {i} note_off with id {note_id}")
+                # self.log.debug(f"Setting voice {i} note_off with id {note_id}")
                 voice.note_off()
 
     def set_cutoff_frequency(self, cutoff):
@@ -233,6 +238,7 @@ class Voice:
     @property
     def active(self):
         # Update the active status based on the is_silent() method of the ADSR envelope
+        # Yeah it's kinda janks but it works. 
         if self._active and self.signal_chain.is_silent():
             self._active = False
         return self._active

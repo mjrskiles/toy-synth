@@ -12,7 +12,6 @@ class MidiPlayer(threading.Thread):
         self.log = logging.getLogger(__name__)
         self.mailbox = mailbox
         self.port = mido.open_output(port_name, virtual=True)
-        self.log.info(f"Available MIDI output ports: {mido.get_output_names()}")
 
     def play_file(self, file_path):
         try:
