@@ -1,10 +1,16 @@
-import mido
+import rtmidi
+# import mido
 
 from .midi_listener import MidiListener
 from .midi_player import MidiPlayer
+from .rtmidi_listener import RTMidiListener
+
+# def get_available_controllers():
+#     return mido.get_input_names()
 
 def get_available_controllers():
-    return mido.get_input_names()
+    midi_in = rtmidi.MidiIn()
+    return midi_in.get_ports()
 
 frequencies = [
     8.176,8.662,9.177,9.723,

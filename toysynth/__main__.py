@@ -2,9 +2,11 @@ import os
 import logging
 import sys
 
+# import mido
+
 from .configuration import SettingsReader
 from .communication import MQTTListener, Mailbox
-from .midi import MidiPlayer, MidiListener, get_available_controllers
+from .midi import MidiPlayer, MidiListener, get_available_controllers, RTMidiListener
 from .synthesis import Synthesizer
 
 if __name__ == "__main__":
@@ -12,6 +14,10 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG, 
                     format='%(asctime)s [%(levelname)s] %(module)s [%(funcName)s]: %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S')
+    
+    # Set the mido backend
+    # We are using pygame because rtmidi had issues on windows
+    # mido.set_backend('mido.backends.portmidi')
     
     # Fetch static data from settings.toml
     main_script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -45,8 +51,8 @@ if __name__ == "__main__":
     # Create the MIDI threads
     #   Open the MIDI file player
     port_name = settings.data['midi']['player_port_name']
-    midi_player_listener = MidiListener(midi_player_listener_mailbox, synthesizer_mailbox, port_name)
-    midi_player = MidiPlayer(midi_player_mailbox, port_name)
+    # midi_player_listener = MidiListener(midi_player_listener_mailbox, synthesizer_mailbox, port_name)
+    # midi_player = MidiPlayer(midi_player_mailbox, port_name)
 
     #   Open listeners for any pre-configured controllers
     auto_attach_list = settings.data['midi']['auto_attach']
@@ -54,14 +60,14 @@ if __name__ == "__main__":
     log.debug(f"Available Controllers: {available_controllers}")
     controllers = [controller for controller in auto_attach_list if controller in available_controllers]
     listener_mailboxes = [Mailbox() for _ in controllers]
-    midi_listeners = [MidiListener(listener_mailboxes[i], synthesizer_mailbox, controllers[i]) for i in range(len(controllers))]
+    midi_listeners = [RTMidiListener(listener_mailboxes[i], synthesizer_mailbox, controllers[i]) for i in range(len(controllers))]
 
     try:
         # Start the threads
         toy_synth.start()
         mqtt_listener.start()
-        midi_player.start()
-        midi_player_listener.start()
+        # midi_player.start()
+        # midi_player_listener.start()
         for listener in midi_listeners:
             listener.start()
 
@@ -88,8 +94,8 @@ if __name__ == "__main__":
     toy_synth.join()
     mqtt_listener.stop()
     mqtt_listener.join()
-    midi_player.join()
-    midi_player_listener.join()
+    # midi_player.join()
+    # midi_player_listener.join()
     for listener in midi_listeners:
         listener.join()
     sys.exit(0)

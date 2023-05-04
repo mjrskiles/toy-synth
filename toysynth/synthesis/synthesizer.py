@@ -120,17 +120,17 @@ class Synthesizer(threading.Thread):
             self.log.debug(f"Couldn't set Synthesizer mode with value {val}")
 
     def setup_signal_chain(self):
-        osc_a = signal.SawtoothWaveOscillator(self.sample_rate, self.frames_per_chunk)
-        osc_b = signal.TriangleWaveOscillator(self.sample_rate, self.frames_per_chunk)
+        # osc_a = signal.SawtoothWaveOscillator(self.sample_rate, self.frames_per_chunk)
+        osc_b = signal.SinWaveOscillator(self.sample_rate, self.frames_per_chunk)
         # osc_b.set_phase_degrees(45)
 
-        osc_mixer = signal.Mixer(self.sample_rate, self.frames_per_chunk, [osc_a, osc_b])
+        # osc_mixer = signal.Mixer(self.sample_rate, self.frames_per_chunk, [osc_b])
 
-        lpf = signal.LowPassFilter(self.sample_rate, self.frames_per_chunk, osc_mixer, 8000.0)
+        # lpf = signal.LowPassFilter(self.sample_rate, self.frames_per_chunk, osc_mixer, 8000.0)
 
-        adsr_env = signal.AdsrEnvelope(self.sample_rate, self.frames_per_chunk, lpf)
+        # adsr_env = signal.AdsrEnvelope(self.sample_rate, self.frames_per_chunk, lpf)
 
-        signal_chain = signal.Chain(self.sample_rate, self.frames_per_chunk, adsr_env)
+        signal_chain = signal.Chain(self.sample_rate, self.frames_per_chunk, osc_b)
         return iter(signal_chain)
     
     def generator(self):
