@@ -8,6 +8,10 @@ from .component import Component
 from .signal_type import SignalType
 
 class Gain(Component):
+    """
+    A gain component multiplies the amplitude of the signal by a constant factor.
+    TODO finish and test this component
+    """
     def __init__(self, sample_rate, frames_per_chunk, signal_type: SignalType, subcomponents: List['Component'] = [], name="Component"):
         super().__init__(sample_rate, frames_per_chunk, signal_type, subcomponents, name)
         self.log = logging.getLogger(__name__)

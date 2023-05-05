@@ -7,14 +7,15 @@ from .component import Component
 from .signal_type import SignalType
 
 class Delay(Component):
-    def __init__(self, sample_rate, frames_per_chunk, subcomponents, name="Delay", delay_time=0.2) -> None:
+    def __init__(self, sample_rate, frames_per_chunk, subcomponents, name="Delay", delay_buffer_length=4.0) -> None:
         super().__init__(sample_rate, frames_per_chunk, signal_type=SignalType.WAVE, subcomponents=subcomponents, name=name)
         self.log = logging.getLogger(__name__)
-        self.delay_time = delay_time
-        self.delay_frames = int(self.delay_time * self.sample_rate)
-        self.log.debug(f"Delay frames: {self.delay_frames}")
+        self.delay_buffer_length = delay_buffer_length
+        self._delay_time = 0.1
+        self.delay_frames = int(self.delay_buffer_length * self.sample_rate)
         self.delay_buffer = np.zeros(self.delay_frames, np.float32)
-        self.delay_buffer_index = 0
+        self.delay_time_start_index = self.delay_frames - int(self.delay_time * self.sample_rate)
+        self.log.debug(f"self.delay_time_start_index: {self.delay_time_start_index}")
         self.wet_gain = 0.5 
 
     def __iter__(self):
@@ -24,29 +25,28 @@ class Delay(Component):
     def __next__(self):
         (mix, props) = next(self.signal_iter)
         amp = props["amp"]
+
+        # self.log.debug(f"mix1: {mix}")
         
         # Add the delayed signal to the mix
-        delayed_signal = self.delay_buffer[self.delay_buffer_index: self.delay_buffer_index + self.frames_per_chunk]
-        if len(delayed_signal) < self.frames_per_chunk:
-            delayed_signal = np.concatenate((delayed_signal, self.delay_buffer[0: self.frames_per_chunk - len(delayed_signal)]))
-        delayed_signal *= self.wet_gain
-        mix += delayed_signal
+        if self.delay_time > 0:
+            delayed_signal = self.delay_buffer[self.delay_time_start_index: self.delay_time_start_index + self.frames_per_chunk]
+            while len(delayed_signal) < self.frames_per_chunk:
+                self.log.debug(f"Had to wrap around the delay buffer")
+                delayed_signal = np.concatenate((delayed_signal, self.delay_buffer[self.delay_time_start_index: self.delay_time_start_index + self.frames_per_chunk - len(delayed_signal)]))
+            
+            # self.log.debug(f"delayed_signal: {delayed_signal}")
+            delayed_signal *= self.wet_gain
+            mix += delayed_signal
+
+        # self.log.debug(f"mix2: {mix}")
+        # TODO make sure the signal is between -1 and 1
 
         # Add the current signal to the delay buffer
-        if self.delay_buffer_index > self.delay_frames - self.frames_per_chunk:
-            initial_chunk_size = self.delay_frames - self.delay_buffer_index
-            leftover = self.frames_per_chunk - initial_chunk_size
-            # self.log.debug(f"leftover: {leftover}")
-            # self.log.debug(f"initial_chunk_size: {initial_chunk_size}")
-            # self.log.debug(f"self.delay_buffer_index: {self.delay_buffer_index}")
-            # self.log.debug(f"self.delay_buffer_index + initial_chunk_size: {self.delay_buffer_index + initial_chunk_size}")
-            self.delay_buffer[self.delay_buffer_index: self.delay_buffer_index + initial_chunk_size] = mix[0: initial_chunk_size]
-            self.delay_buffer[0: leftover] = mix[initial_chunk_size: initial_chunk_size + leftover]
-        else:
-            self.delay_buffer[self.delay_buffer_index: self.delay_buffer_index + self.frames_per_chunk] = mix
-        
-        # Update the delay buffer index
-        self.delay_buffer_index = (self.delay_buffer_index + self.frames_per_chunk) % self.delay_frames
+        self.delay_buffer = np.roll(self.delay_buffer, -self.frames_per_chunk)
+        self.delay_buffer[self.delay_frames - self.frames_per_chunk: self.delay_frames] = mix
+
+        # self.log.debug(f"self.delay_buffer: {self.delay_buffer}")
 
         # Update the amplitude
         self._props["amp"] = amp
@@ -56,7 +56,7 @@ class Delay(Component):
 
     
     def __deepcopy__(self, memo):
-        return Delay(self.sample_rate, self.frames_per_chunk, subcomponents=[deepcopy(sub, memo) for sub in self.subcomponents], delay_time=self.delay_time)
+        return Delay(self.sample_rate, self.frames_per_chunk, subcomponents=[deepcopy(sub, memo) for sub in self.subcomponents], delay_buffer_length=self.delay_buffer_length)
     
     @property
     def delay_time(self):
@@ -65,6 +65,4 @@ class Delay(Component):
     @delay_time.setter
     def delay_time(self, value):
         self._delay_time = float(value)
-        self.delay_frames = int(value * self.sample_rate)
-        self.delay_buffer = np.zeros(self.delay_frames, np.float32)
-        self.delay_buffer_index = 0
+        self.delay_time_start_index = self.delay_frames - int(self.delay_time * self.sample_rate)

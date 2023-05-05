@@ -76,5 +76,9 @@ class Chain(Component):
         for delay in self.get_components_by_class(Delay):
             delay.delay_time = delay_time
 
+    def set_delay_wet_gain(self, wet_gain):
+        for delay in self.get_components_by_class(Delay):
+            delay.wet_gain = wet_gain
+
     def is_silent(self):
         return self.subcomponents[0].is_silent()
