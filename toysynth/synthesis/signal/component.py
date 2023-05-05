@@ -29,7 +29,7 @@ class Component():
         self.subcomponents = subcomponents
         self.signal_type = signal_type
         self.active = False
-        self.name = name + "#" + str(random.randint(0, 999999))
+        self.name = name + "#" + str(random.randint(0, 9999))
         self._props = {}
 
     def __iter__(self):

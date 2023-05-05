@@ -9,4 +9,5 @@ from .signal_type import SignalType
 from .chain import Chain
 from .low_pass_filter import LowPassFilter
 from .adsr_envelope import AdsrEnvelope
+from .delay import Delay
 from . import utils

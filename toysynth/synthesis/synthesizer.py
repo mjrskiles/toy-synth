@@ -30,6 +30,7 @@ class Synthesizer(threading.Thread):
         self.envelope_adr_vals = np.logspace(0, 1, 128, endpoint=True, base=10, dtype=np.float32) - 1 # range is from 0-9
         logspaced = np.logspace(0, 1, 128, endpoint=True, dtype=np.float32) # range is from 1-10
         self.envelope_s_vals = (logspaced - 1) / (10 - 1) # range is from 0-1
+        self.delay_times = np.logspace(-2, 1, 128, endpoint=True, base=10, dtype=np.float32) # range is from 0.01-10
         self.stream_player = PyAudioStreamPlayer(sample_rate, frames_per_chunk, self.generator())
         self.mode = Synthesizer.Mode.POLY
         
@@ -93,7 +94,11 @@ class Synthesizer(threading.Thread):
                             cc_val = int(control_val)
                             self.set_cutoff_frequency(self.cutoff_vals[cc_val])
                             self.log.info(f"LPF Cutoff: {self.cutoff_vals[cc_val]}")
-
+                        if cc_num == "76":
+                            chan = int(channel)
+                            cc_val = int(control_val)
+                            self.set_delay_time(self.delay_times[cc_val])
+                            self.log.info(f"Delay Time: {self.delay_times[cc_val]}")
                         elif cc_num == "126":
                             self.mode = Synthesizer.Mode.MONO
                             self.log.info(f"Set synth mode to MONO")
@@ -130,7 +135,9 @@ class Synthesizer(threading.Thread):
 
         adsr_env = signal.AdsrEnvelope(self.sample_rate, self.frames_per_chunk, lpf)
 
-        signal_chain = signal.Chain(self.sample_rate, self.frames_per_chunk, adsr_env)
+        delay = signal.Delay(self.sample_rate, self.frames_per_chunk, [adsr_env], delay_time=0.2)
+
+        signal_chain = signal.Chain(self.sample_rate, self.frames_per_chunk, delay)
         return iter(signal_chain)
     
     def generator(self):
@@ -227,6 +234,10 @@ class Synthesizer(threading.Thread):
     def set_release(self, release):
         for voice in self.voices:
             voice.signal_chain.set_release(release)
+
+    def set_delay_time(self, delay_time):
+        for voice in self.voices:
+            voice.signal_chain.set_delay_time(delay_time)
 
 
 class Voice:

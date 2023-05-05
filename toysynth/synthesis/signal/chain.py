@@ -8,6 +8,7 @@ from .oscillator import Oscillator
 from .low_pass_filter import LowPassFilter
 from .adsr_envelope import AdsrEnvelope
 from .signal_type import SignalType
+from .delay import Delay
 
 class Chain(Component):
     def __init__(self, sample_rate, frames_per_chunk, root_component: Component):
@@ -70,6 +71,10 @@ class Chain(Component):
     def set_release(self, release):
         for env in self.get_components_by_class(AdsrEnvelope):
             env.release = release
+
+    def set_delay_time(self, delay_time):
+        for delay in self.get_components_by_class(Delay):
+            delay.delay_time = delay_time
 
     def is_silent(self):
         return self.subcomponents[0].is_silent()
