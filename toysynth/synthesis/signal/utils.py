@@ -13,3 +13,9 @@ def normalize(array: np.ndarray):
 
     normalized_array = 2 * (array - min_val) / range_val - 1
     return normalized_array
+
+def seconds_to_frames(seconds, sample_rate):
+    return int(seconds * sample_rate)
+
+def frames_to_seconds(frames, sample_rate):
+    return frames / sample_rate

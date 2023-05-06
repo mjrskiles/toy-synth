@@ -52,14 +52,14 @@ class Synthesizer(threading.Thread):
                         note_name = midi.note_names[int_note]
                         if chan < len(self.voices):
                             self.note_on(int_note, chan)
-                            self.log.info(f"Note on {note_name} ({int_note}), chan {chan}")
+                            # self.log.info(f"Note on {note_name} ({int_note}), chan {chan}")
                     case ["note_off", "-n", note, "-c", channel]:
                         int_note = int(note)
                         chan = int(channel)
                         note_name = midi.note_names[int(note)]
                         if chan < len(self.voices):
                             self.note_off(int_note, chan)
-                            self.log.info(f"Note off {note_name} ({int_note}), chan {chan}")
+                            # self.log.info(f"Note off {note_name} ({int_note}), chan {chan}")
                     case ["control_change", "-c", channel, "-n", cc_num, "-v", control_val]:
                         if cc_num == "20":
                             cc_val = int(control_val)
@@ -104,10 +104,10 @@ class Synthesizer(threading.Thread):
                             cc_val = int(control_val)
                             self.set_delay_wet_gain(self.envelope_s_vals[cc_val]) # range is 0 - 1
                             self.log.info(f"Delay Wet Gain: {self.envelope_s_vals[cc_val]}")
-                        elif cc_num == "126":
+                        if cc_num == "126":
                             self.mode = Synthesizer.Mode.MONO
                             self.log.info(f"Set synth mode to MONO")
-                        elif cc_num == "127":
+                        if cc_num == "127":
                             self.mode = Synthesizer.Mode.POLY
                             self.log.info(f"Set synth mode to POLY")
                     case _:

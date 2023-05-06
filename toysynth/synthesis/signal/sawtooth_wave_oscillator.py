@@ -2,6 +2,7 @@ import logging
 import numpy as np
 
 from .oscillator import Oscillator
+from .utils import seconds_to_frames
 
 class SawtoothWaveOscillator(Oscillator):
     def __init__(self, sample_rate, frames_per_chunk, name="SawtoothWaveOscillator"):
@@ -22,18 +23,26 @@ class SawtoothWaveOscillator(Oscillator):
             self._props["amp"] = 0.0
 
         else:
-            self._props["amp"] = 1.0
-            p = 1/self.frequency #calculate the period for the formula
+            self._props["amp"] = self.amplitude
             ts = np.linspace(self._chunk_start_time, self._chunk_end_time, self.frames_per_chunk, endpoint=False)
-            
-            self._wave = 2 * ((ts + self.phase * p) % p) / p - 1
+            period = 1 / self.frequency
+
+            # Calculate the position within the sawtooth waveform based on chunk_start_time
+            position_in_period = self._chunk_start_time % period
+
+            # Generate a single cycle of the sawtooth wave, starting at the position_in_period
+            ramp = np.linspace(-1, 1, int(self.sample_rate * period), endpoint=False)
+            ramp_start_index = int(position_in_period * self.sample_rate)
+            ramp = np.roll(ramp, -ramp_start_index)[:self.frames_per_chunk]
+            ramp *= self.amplitude
+
+            self._wave = np.tile(ramp, np.ceil(self.frames_per_chunk / len(ramp)).astype(int))[:self.frames_per_chunk]
 
         # Update the state variables for next time
         self._chunk_start_time = self._chunk_end_time
         self._chunk_end_time += self._chunk_duration
 
-        # self.log.debug(f"wave:\n{self._wave}")
         return (self._wave.astype(np.float32), self._props)
-        
+
     def __deepcopy__(self, memo):
         return SawtoothWaveOscillator(self.sample_rate, self.frames_per_chunk)
