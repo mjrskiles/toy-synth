@@ -24,7 +24,6 @@ class SawtoothWaveOscillator(Oscillator):
 
         else:
             self._props["amp"] = self.amplitude
-            ts = np.linspace(self._chunk_start_time, self._chunk_end_time, self.frames_per_chunk, endpoint=False)
             period = 1 / self.frequency
 
             # Calculate the position within the sawtooth waveform based on chunk_start_time

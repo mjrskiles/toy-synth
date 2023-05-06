@@ -130,8 +130,8 @@ class Synthesizer(threading.Thread):
             self.log.debug(f"Couldn't set Synthesizer mode with value {val}")
 
     def setup_signal_chain(self):
-        osc_a = signal.SawtoothWaveOscillator(self.sample_rate, self.frames_per_chunk)
-        osc_b = signal.TriangleWaveOscillator(self.sample_rate, self.frames_per_chunk)
+        osc_a = signal.TriangleWaveOscillator(self.sample_rate, self.frames_per_chunk)
+        osc_b = signal.SawtoothWaveOscillator(self.sample_rate, self.frames_per_chunk)
         # osc_b.set_phase_degrees(45)
 
         osc_mixer = signal.Mixer(self.sample_rate, self.frames_per_chunk, [osc_a, osc_b])

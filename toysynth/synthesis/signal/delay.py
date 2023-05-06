@@ -25,8 +25,6 @@ class Delay(Component):
     def __next__(self):
         (mix, props) = next(self.signal_iter)
         amp = props["amp"]
-
-        # self.log.debug(f"mix1: {mix}")
         
         # Add the delayed signal to the mix
         if self.delay_time > 0:
@@ -35,18 +33,19 @@ class Delay(Component):
                 self.log.debug(f"Had to wrap around the delay buffer")
                 delayed_signal = np.concatenate((delayed_signal, self.delay_buffer[self.delay_time_start_index: self.delay_time_start_index + self.frames_per_chunk - len(delayed_signal)]))
             
-            # self.log.debug(f"delayed_signal: {delayed_signal}")
             delayed_signal *= self.wet_gain
+            amp += self.wet_gain
             mix += delayed_signal
 
-        # self.log.debug(f"mix2: {mix}")
-        # TODO make sure the signal is between -1 and 1
+        # make sure the signal is between -1 and 1
+        if amp > 1.0:
+            # self.log.debug(f"Normalizing signal with amp {amp}")
+            mix = mix / amp
+            amp = 1.0
 
         # Add the current signal to the delay buffer
         self.delay_buffer = np.roll(self.delay_buffer, -self.frames_per_chunk)
         self.delay_buffer[self.delay_frames - self.frames_per_chunk: self.delay_frames] = mix
-
-        # self.log.debug(f"self.delay_buffer: {self.delay_buffer}")
 
         # Update the amplitude
         self._props["amp"] = amp
