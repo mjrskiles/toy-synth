@@ -7,6 +7,7 @@ from .sawtooth_wave_oscillator import SawtoothWaveOscillator
 class TriangleWaveOscillator(SawtoothWaveOscillator):
     def __init__(self, sample_rate, frames_per_chunk, name="TriWaveOscillator"):
         super().__init__(sample_rate, frames_per_chunk, name=name)
+        self.log = logging.getLogger(__name__)
     
     def __iter__(self):
         return super().__iter__()

@@ -30,7 +30,7 @@ class Synthesizer(threading.Thread):
         self.envelope_adr_vals = np.logspace(0, 1, 128, endpoint=True, base=10, dtype=np.float32) - 1 # range is from 0-9
         logspaced = np.logspace(0, 1, 128, endpoint=True, dtype=np.float32) # range is from 1-10
         self.envelope_s_vals = (logspaced - 1) / (10 - 1) # range is from 0-1
-        self.delay_times = np.logspace(0, 2, 128, endpoint=True, base=2, dtype=np.float32) - 1 # range is from 0 - 3
+        self.delay_times = 0.5 * np.logspace(0, 2, 128, endpoint=True, base=2, dtype=np.float32) - 0.5 # range is from 0 - 6
         self.stream_player = PyAudioStreamPlayer(sample_rate, frames_per_chunk, self.generator())
         self.mode = Synthesizer.Mode.POLY
         
@@ -69,47 +69,54 @@ class Synthesizer(threading.Thread):
                             elif cc_val != 0:
                                 self.mode = Synthesizer.Mode.MONO
                                 self.log.info(f"Set synth mode to MONO")
-                        if cc_num == "70":
+                        elif cc_num == "21":
+                            cc_val = int(control_val)
+                            if cc_val != 0:
+                                self.all_notes_off()
+                                self.log.info(f"Turned off all notes")
+                        elif cc_num == "70":
                             cc_val = int(control_val)
                             lookup_val = self.envelope_adr_vals[cc_val]
                             self.set_attack(lookup_val)
                             self.log.info(f"Attack: {lookup_val}")
-                        if cc_num == "71":
+                        elif cc_num == "71":
                             cc_val = int(control_val)
                             lookup_val = self.envelope_adr_vals[cc_val]
                             self.set_decay(lookup_val)
                             self.log.info(f"Decay: {lookup_val}")
-                        if cc_num == "72":
+                        elif cc_num == "72":
                             cc_val = int(control_val)
                             lookup_val = self.envelope_s_vals[cc_val]
                             self.set_sustain(lookup_val)
                             self.log.info(f"Sustain: {lookup_val}")
-                        if cc_num == "73":
+                        elif cc_num == "73":
                             cc_val = int(control_val)
                             lookup_val = self.envelope_adr_vals[cc_val]
                             self.set_release(lookup_val)
                             self.log.info(f"Release: {lookup_val}")
-                        if cc_num == "74":
+                        elif cc_num == "74":
                             chan = int(channel)
                             cc_val = int(control_val)
                             self.set_cutoff_frequency(self.cutoff_vals[cc_val])
                             self.log.info(f"LPF Cutoff: {self.cutoff_vals[cc_val]}")
-                        if cc_num == "76":
+                        elif cc_num == "76":
                             chan = int(channel)
                             cc_val = int(control_val)
                             self.set_delay_time(self.delay_times[cc_val])
                             self.log.info(f"Delay Time: {self.delay_times[cc_val]}")
-                        if cc_num == "77":
+                        elif cc_num == "77":
                             chan = int(channel)
                             cc_val = int(control_val)
                             self.set_delay_wet_gain(self.envelope_s_vals[cc_val]) # range is 0 - 1
                             self.log.info(f"Delay Wet Gain: {self.envelope_s_vals[cc_val]}")
-                        if cc_num == "126":
+                        elif cc_num == "126":
                             self.mode = Synthesizer.Mode.MONO
                             self.log.info(f"Set synth mode to MONO")
-                        if cc_num == "127":
+                        elif cc_num == "127":
                             self.mode = Synthesizer.Mode.POLY
                             self.log.info(f"Set synth mode to POLY")
+                        else:
+                            self.log.info(f"Unhandled control change: {message}")
                     case _:
                         self.log.info(f"Matched unknown command: {message}")
         return
@@ -219,6 +226,10 @@ class Synthesizer(threading.Thread):
             if voice.active and voice.id == note_id:
                 # self.log.debug(f"Setting voice {i} note_off with id {note_id}")
                 voice.note_off()
+    
+    def all_notes_off(self):
+        for voice in self.voices:
+            voice.note_off()
 
     def set_cutoff_frequency(self, cutoff):
         for voice in self.voices:

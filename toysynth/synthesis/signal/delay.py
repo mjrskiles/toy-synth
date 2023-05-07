@@ -15,7 +15,6 @@ class Delay(Component):
         self.delay_frames = int(self.delay_buffer_length * self.sample_rate)
         self.delay_buffer = np.zeros(self.delay_frames, np.float32)
         self.delay_time_start_index = self.delay_frames - int(self.delay_time * self.sample_rate)
-        self.log.debug(f"self.delay_time_start_index: {self.delay_time_start_index}")
         self.wet_gain = 0.5 
 
     def __iter__(self):
