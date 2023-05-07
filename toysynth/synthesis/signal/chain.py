@@ -9,6 +9,7 @@ from .low_pass_filter import LowPassFilter
 from .adsr_envelope import AdsrEnvelope
 from .signal_type import SignalType
 from .delay import Delay
+from .gain import Gain
 
 class Chain(Component):
     def __init__(self, sample_rate, frames_per_chunk, root_component: Component):
@@ -79,6 +80,11 @@ class Chain(Component):
     def set_delay_wet_gain(self, wet_gain):
         for delay in self.get_components_by_class(Delay):
             delay.wet_gain = wet_gain
+
+    def set_gain_by_control_tag(self, ctrl_tag, gain):
+        for component in self.get_components_by_class(Gain):
+            if component.control_tag == ctrl_tag:
+                component.amp = gain
 
     def is_silent(self):
         return self.subcomponents[0].is_silent()

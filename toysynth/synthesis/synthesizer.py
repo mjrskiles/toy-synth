@@ -99,6 +99,11 @@ class Synthesizer(threading.Thread):
                             cc_val = int(control_val)
                             self.set_cutoff_frequency(self.cutoff_vals[cc_val])
                             self.log.info(f"LPF Cutoff: {self.cutoff_vals[cc_val]}")
+                        elif cc_num == "75":
+                            chan = int(channel)
+                            cc_val = int(control_val)
+                            self.set_gain_b(self.envelope_s_vals[cc_val]) # range is 0 - 1
+                            self.log.info(f"Gain B: {self.envelope_s_vals[cc_val]}")
                         elif cc_num == "76":
                             chan = int(channel)
                             cc_val = int(control_val)
@@ -137,11 +142,14 @@ class Synthesizer(threading.Thread):
             self.log.debug(f"Couldn't set Synthesizer mode with value {val}")
 
     def setup_signal_chain(self):
-        osc_a = signal.TriangleWaveOscillator(self.sample_rate, self.frames_per_chunk)
-        osc_b = signal.SawtoothWaveOscillator(self.sample_rate, self.frames_per_chunk)
+        osc_a = signal.SawtoothWaveOscillator(self.sample_rate, self.frames_per_chunk)
+        osc_b = signal.NoiseGenerator(self.sample_rate, self.frames_per_chunk)
         # osc_b.set_phase_degrees(45)
 
-        osc_mixer = signal.Mixer(self.sample_rate, self.frames_per_chunk, [osc_a, osc_b])
+        osc_b_gain = signal.Gain(self.sample_rate, self.frames_per_chunk, signal.SignalType.WAVE, subcomponents=[osc_b], control_tag="gain_b")
+        self.gain_b_ctrl_tag = osc_b_gain.control_tag
+
+        osc_mixer = signal.Mixer(self.sample_rate, self.frames_per_chunk, [osc_a, osc_b_gain])
 
         lpf = signal.LowPassFilter(self.sample_rate, self.frames_per_chunk, osc_mixer, 8000.0)
 
@@ -231,10 +239,6 @@ class Synthesizer(threading.Thread):
         for voice in self.voices:
             voice.note_off()
 
-    def set_cutoff_frequency(self, cutoff):
-        for voice in self.voices:
-            voice.signal_chain.set_filter_cutoff(cutoff)
-
     def set_attack(self, attack):
         for voice in self.voices:
             voice.signal_chain.set_attack(attack)
@@ -250,6 +254,10 @@ class Synthesizer(threading.Thread):
     def set_release(self, release):
         for voice in self.voices:
             voice.signal_chain.set_release(release)
+    
+    def set_cutoff_frequency(self, cutoff):
+        for voice in self.voices:
+            voice.signal_chain.set_filter_cutoff(cutoff)
 
     def set_delay_time(self, delay_time):
         for voice in self.voices:
@@ -258,6 +266,11 @@ class Synthesizer(threading.Thread):
     def set_delay_wet_gain(self, wet_gain):
         for voice in self.voices:
             voice.signal_chain.set_delay_wet_gain(wet_gain)
+
+    def set_gain_b(self, gain):
+        for voice in self.voices:
+            voice.signal_chain.set_gain_by_control_tag(self.gain_b_ctrl_tag, gain)
+            self.log.debug(f"Setting {self.gain_b_ctrl_tag} to {gain}")
 
 class Voice:
     def __init__(self, signal_chain: signal.Chain):
