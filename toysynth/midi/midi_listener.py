@@ -32,6 +32,9 @@ class MidiListener(threading.Thread):
                         ctrl_msg = mb.builder().control_change().on_channel(msg.channel).with_control_num(msg.control).with_value(msg.value)
                         # self.log.debug(f"Received CC : {msg} and translated to : {ctrl_msg}")
                         self.controller_mailbox.put(str(ctrl_msg))
+                    case "program_change":
+                        ctrl_msg = mb.builder().program_change().on_channel(msg.channel).with_program_num(msg.program)
+                        self.controller_mailbox.put(str(ctrl_msg))
                     case "stop":
                         self.log.info(f"Received midi STOP message")
                     case _:

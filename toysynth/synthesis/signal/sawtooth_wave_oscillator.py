@@ -24,18 +24,9 @@ class SawtoothWaveOscillator(Oscillator):
 
         else:
             self._props["amp"] = self.amplitude
-            period = 1 / self.frequency
-
-            # Calculate the position within the sawtooth waveform based on chunk_start_time
-            position_in_period = self._chunk_start_time % period
-
-            # Generate a single cycle of the sawtooth wave, starting at the position_in_period
-            ramp = np.linspace(-1, 1, int(self.sample_rate * period), endpoint=False)
-            ramp_start_index = int(position_in_period * self.sample_rate)
-            ramp = np.roll(ramp, -ramp_start_index)[:self.frames_per_chunk]
-            ramp *= self.amplitude
-
-            self._wave = np.tile(ramp, np.ceil(self.frames_per_chunk / len(ramp)).astype(int))[:self.frames_per_chunk]
+            ts = np.linspace(self._chunk_start_time, self._chunk_end_time, self.frames_per_chunk, endpoint=False)
+            sawtooth_wave = self.amplitude * (2 * ((ts * self.frequency) % 1) - 1)
+            self._wave = sawtooth_wave
 
         # Update the state variables for next time
         self._chunk_start_time = self._chunk_end_time

@@ -33,6 +33,7 @@ class Synthesizer(threading.Thread):
         self.delay_times = 0.5 * np.logspace(0, 2, 128, endpoint=True, base=2, dtype=np.float32) - 0.5 # range is from 0 - 6
         self.stream_player = PyAudioStreamPlayer(sample_rate, frames_per_chunk, self.generator())
         self.mode = Synthesizer.Mode.POLY
+        self.control_change_handler = self.cc_bank_a_handler
         
 
     def run(self):
@@ -61,67 +62,16 @@ class Synthesizer(threading.Thread):
                             self.note_off(int_note, chan)
                             # self.log.info(f"Note off {note_name} ({int_note}), chan {chan}")
                     case ["control_change", "-c", channel, "-n", cc_num, "-v", control_val]:
-                        if cc_num == "20":
-                            cc_val = int(control_val)
-                            if cc_val != 0 and self.mode == Synthesizer.Mode.MONO:
-                                self.mode = Synthesizer.Mode.POLY
-                                self.log.info(f"Set synth mode to POLY")
-                            elif cc_val != 0:
-                                self.mode = Synthesizer.Mode.MONO
-                                self.log.info(f"Set synth mode to MONO")
-                        elif cc_num == "21":
-                            cc_val = int(control_val)
-                            if cc_val != 0:
-                                self.all_notes_off()
-                                self.log.info(f"Turned off all notes")
-                        elif cc_num == "70":
-                            cc_val = int(control_val)
-                            lookup_val = self.envelope_adr_vals[cc_val]
-                            self.set_attack(lookup_val)
-                            self.log.info(f"Attack: {lookup_val}")
-                        elif cc_num == "71":
-                            cc_val = int(control_val)
-                            lookup_val = self.envelope_adr_vals[cc_val]
-                            self.set_decay(lookup_val)
-                            self.log.info(f"Decay: {lookup_val}")
-                        elif cc_num == "72":
-                            cc_val = int(control_val)
-                            lookup_val = self.envelope_s_vals[cc_val]
-                            self.set_sustain(lookup_val)
-                            self.log.info(f"Sustain: {lookup_val}")
-                        elif cc_num == "73":
-                            cc_val = int(control_val)
-                            lookup_val = self.envelope_adr_vals[cc_val]
-                            self.set_release(lookup_val)
-                            self.log.info(f"Release: {lookup_val}")
-                        elif cc_num == "74":
-                            chan = int(channel)
-                            cc_val = int(control_val)
-                            self.set_cutoff_frequency(self.cutoff_vals[cc_val])
-                            self.log.info(f"LPF Cutoff: {self.cutoff_vals[cc_val]}")
-                        elif cc_num == "75":
-                            chan = int(channel)
-                            cc_val = int(control_val)
-                            self.set_gain_b(self.envelope_s_vals[cc_val]) # range is 0 - 1
-                            self.log.info(f"Gain B: {self.envelope_s_vals[cc_val]}")
-                        elif cc_num == "76":
-                            chan = int(channel)
-                            cc_val = int(control_val)
-                            self.set_delay_time(self.delay_times[cc_val])
-                            self.log.info(f"Delay Time: {self.delay_times[cc_val]}")
-                        elif cc_num == "77":
-                            chan = int(channel)
-                            cc_val = int(control_val)
-                            self.set_delay_wet_gain(self.envelope_s_vals[cc_val]) # range is 0 - 1
-                            self.log.info(f"Delay Wet Gain: {self.envelope_s_vals[cc_val]}")
-                        elif cc_num == "126":
-                            self.mode = Synthesizer.Mode.MONO
-                            self.log.info(f"Set synth mode to MONO")
-                        elif cc_num == "127":
-                            self.mode = Synthesizer.Mode.POLY
-                            self.log.info(f"Set synth mode to POLY")
-                        else:
-                            self.log.info(f"Unhandled control change: {message}")
+                        self.control_change_handler(channel, cc_num, control_val)
+                    case ["program_change", "-c", channel, "-n", program_num]:
+                        self.log.info(f"Received PC : {message}")
+                        if channel == "9" and program_num == "0":
+                            if self.control_change_handler == self.cc_bank_a_handler:
+                                self.control_change_handler = self.cc_bank_b_handler
+                                self.log.info(f"Set control change handler to bank B")
+                            else:
+                                self.control_change_handler = self.cc_bank_a_handler
+                                self.log.info(f"Set control change handler to bank A")
                     case _:
                         self.log.info(f"Matched unknown command: {message}")
         return
@@ -143,21 +93,23 @@ class Synthesizer(threading.Thread):
 
     def setup_signal_chain(self):
         osc_a = signal.SawtoothWaveOscillator(self.sample_rate, self.frames_per_chunk)
-        osc_b = signal.NoiseGenerator(self.sample_rate, self.frames_per_chunk)
+        osc_a_gain = signal.Gain(self.sample_rate, self.frames_per_chunk, signal.SignalType.WAVE, subcomponents=[osc_a], control_tag="gain_a")
+        self.gain_a_ctrl_tag = osc_a_gain.control_tag
+
+        osc_b = signal.SinWaveOscillator(self.sample_rate, self.frames_per_chunk)
         # osc_b.set_phase_degrees(45)
 
         osc_b_gain = signal.Gain(self.sample_rate, self.frames_per_chunk, signal.SignalType.WAVE, subcomponents=[osc_b], control_tag="gain_b")
         self.gain_b_ctrl_tag = osc_b_gain.control_tag
 
-        osc_mixer = signal.Mixer(self.sample_rate, self.frames_per_chunk, [osc_a, osc_b_gain])
+        osc_mixer = signal.Mixer(self.sample_rate, self.frames_per_chunk, [osc_a_gain, osc_b_gain])
 
-        lpf = signal.LowPassFilter(self.sample_rate, self.frames_per_chunk, osc_mixer, 8000.0)
-
-        adsr_env = signal.AdsrEnvelope(self.sample_rate, self.frames_per_chunk, lpf)
+        adsr_env = signal.AdsrEnvelope(self.sample_rate, self.frames_per_chunk, osc_mixer)
 
         delay = signal.Delay(self.sample_rate, self.frames_per_chunk, [adsr_env], delay_buffer_length=4.0)
+        lpf = signal.LowPassFilter(self.sample_rate, self.frames_per_chunk, delay, 8000.0)
 
-        signal_chain = signal.Chain(self.sample_rate, self.frames_per_chunk, delay)
+        signal_chain = signal.Chain(self.sample_rate, self.frames_per_chunk, lpf)
         return iter(signal_chain)
     
     def generator(self):
@@ -267,10 +219,84 @@ class Synthesizer(threading.Thread):
         for voice in self.voices:
             voice.signal_chain.set_delay_wet_gain(wet_gain)
 
+    def set_gain_a(self, gain):
+        for voice in self.voices:
+            voice.signal_chain.set_gain_by_control_tag(self.gain_a_ctrl_tag, gain)
+
     def set_gain_b(self, gain):
         for voice in self.voices:
             voice.signal_chain.set_gain_by_control_tag(self.gain_b_ctrl_tag, gain)
-            self.log.debug(f"Setting {self.gain_b_ctrl_tag} to {gain}")
+
+    def cc_bank_a_handler(self, channel, cc_num, control_val):
+        if cc_num == "20":
+            cc_val = int(control_val)
+            if cc_val != 0 and self.mode == Synthesizer.Mode.MONO:
+                self.mode = Synthesizer.Mode.POLY
+                self.log.info(f"Set synth mode to POLY")
+            elif cc_val != 0:
+                self.mode = Synthesizer.Mode.MONO
+                self.log.info(f"Set synth mode to MONO")
+        elif cc_num == "21":
+            cc_val = int(control_val)
+            if cc_val != 0:
+                self.all_notes_off()
+                self.log.info(f"Turned off all notes")
+        elif cc_num == "70":
+            cc_val = int(control_val)
+            lookup_val = self.envelope_adr_vals[cc_val]
+            self.set_attack(lookup_val)
+            self.log.info(f"Attack: {lookup_val}")
+        elif cc_num == "71":
+            cc_val = int(control_val)
+            lookup_val = self.envelope_adr_vals[cc_val]
+            self.set_decay(lookup_val)
+            self.log.info(f"Decay: {lookup_val}")
+        elif cc_num == "72":
+            cc_val = int(control_val)
+            lookup_val = self.envelope_s_vals[cc_val]
+            self.set_sustain(lookup_val)
+            self.log.info(f"Sustain: {lookup_val}")
+        elif cc_num == "73":
+            cc_val = int(control_val)
+            lookup_val = self.envelope_adr_vals[cc_val]
+            self.set_release(lookup_val)
+            self.log.info(f"Release: {lookup_val}")
+        elif cc_num == "74":
+            chan = int(channel)
+            cc_val = int(control_val)
+            self.set_cutoff_frequency(self.cutoff_vals[cc_val])
+            self.log.info(f"LPF Cutoff: {self.cutoff_vals[cc_val]}")
+        elif cc_num == "76":
+            chan = int(channel)
+            cc_val = int(control_val)
+            self.set_delay_time(self.delay_times[cc_val])
+            self.log.info(f"Delay Time: {self.delay_times[cc_val]}")
+        elif cc_num == "77":
+            chan = int(channel)
+            cc_val = int(control_val)
+            self.set_delay_wet_gain(self.envelope_s_vals[cc_val]) # range is 0 - 1
+            self.log.info(f"Delay Wet Gain: {self.envelope_s_vals[cc_val]}")
+        elif cc_num == "126":
+            self.mode = Synthesizer.Mode.MONO
+            self.log.info(f"Set synth mode to MONO")
+        elif cc_num == "127":
+            self.mode = Synthesizer.Mode.POLY
+            self.log.info(f"Set synth mode to POLY")
+        else:
+            self.log.info(f"Unhandled control change: CC {cc_num} with value {control_val} on channel {channel}")
+
+    def cc_bank_b_handler(self, channel, cc_num, control_val):
+        if cc_num == "74":
+            cc_val = int(control_val)
+            self.set_gain_a(self.envelope_s_vals[cc_val])
+            self.log.info(f"Gain A: {self.envelope_s_vals[cc_val]}")
+        elif cc_num == "75":
+            cc_val = int(control_val)
+            self.set_gain_b(self.envelope_s_vals[cc_val]) # range is 0 - 1
+            self.log.info(f"Gain B: {self.envelope_s_vals[cc_val]}")
+        else:
+            self.log.info(f"Unhandled control change: CC {cc_num} with value {control_val} on channel {channel}")
+
 
 class Voice:
     def __init__(self, signal_chain: signal.Chain):

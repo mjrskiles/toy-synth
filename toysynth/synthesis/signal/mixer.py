@@ -32,8 +32,8 @@ class Mixer(Component):
         
         component_amp = (amp / num_active_voices) if num_active_voices > 0 else np.float32(0.0)
         self._props["amp"] = component_amp
-        if amp != 0:
-            mix = mix / np.float32(amp)
+        if amp > 1:
+            mix = self.normalize_signal(mix)
         return (mix, self._props)
     
     def __deepcopy__(self, memo):
