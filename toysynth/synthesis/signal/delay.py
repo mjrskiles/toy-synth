@@ -30,7 +30,7 @@ class Delay(Component):
             delayed_signal = self.delay_buffer[self.delay_time_start_index: self.delay_time_start_index + self.frames_per_chunk]
             while len(delayed_signal) < self.frames_per_chunk:
                 self.log.debug(f"Had to wrap around the delay buffer")
-                delayed_signal = np.concatenate((delayed_signal, self.delay_buffer[self.delay_time_start_index: self.delay_time_start_index + self.frames_per_chunk - len(delayed_signal)]))
+                delayed_signal = np.concatenate((delayed_signal, self.delay_buffer[:self.frames_per_chunk - len(delayed_signal)]))
             
             delayed_signal *= self.wet_gain
             amp += self.wet_gain

@@ -31,9 +31,12 @@ class Synthesizer(threading.Thread):
         logspaced = np.logspace(0, 1, 128, endpoint=True, dtype=np.float32) # range is from 1-10
         self.envelope_s_vals = (logspaced - 1) / (10 - 1) # range is from 0-1
         self.delay_times = 0.5 * np.logspace(0, 2, 128, endpoint=True, base=2, dtype=np.float32) - 0.5 # range is from 0 - 6
+        self.osc_mix_vals = np.linspace(0, 1, 128, endpoint=True, dtype=np.float32)
         self.stream_player = PyAudioStreamPlayer(sample_rate, frames_per_chunk, self.generator())
         self.mode = Synthesizer.Mode.POLY
         self.control_change_handler = self.cc_bank_a_handler
+        self.set_gain_a(0.5)
+        self.set_gain_b(0.5) # TODO should this be in setup signal chain?
         
 
     def run(self):
@@ -107,6 +110,7 @@ class Synthesizer(threading.Thread):
         adsr_env = signal.AdsrEnvelope(self.sample_rate, self.frames_per_chunk, osc_mixer)
 
         delay = signal.Delay(self.sample_rate, self.frames_per_chunk, [adsr_env], delay_buffer_length=4.0)
+
         lpf = signal.LowPassFilter(self.sample_rate, self.frames_per_chunk, delay, 8000.0)
 
         signal_chain = signal.Chain(self.sample_rate, self.frames_per_chunk, lpf)
@@ -266,6 +270,14 @@ class Synthesizer(threading.Thread):
             cc_val = int(control_val)
             self.set_cutoff_frequency(self.cutoff_vals[cc_val])
             self.log.info(f"LPF Cutoff: {self.cutoff_vals[cc_val]}")
+        elif cc_num == "75":
+            cc_val = int(control_val)
+            gain_a_mix_val = self.osc_mix_vals[cc_val]
+            gain_b_mix_val = 1 - gain_a_mix_val
+            self.set_gain_a(gain_a_mix_val)
+            self.set_gain_b(gain_b_mix_val)
+            self.log.info(f"Gain A: {gain_a_mix_val}")
+            self.log.info(f"Gain B: {gain_b_mix_val}")
         elif cc_num == "76":
             chan = int(channel)
             cc_val = int(control_val)
@@ -286,16 +298,7 @@ class Synthesizer(threading.Thread):
             self.log.info(f"Unhandled control change: CC {cc_num} with value {control_val} on channel {channel}")
 
     def cc_bank_b_handler(self, channel, cc_num, control_val):
-        if cc_num == "74":
-            cc_val = int(control_val)
-            self.set_gain_a(self.envelope_s_vals[cc_val])
-            self.log.info(f"Gain A: {self.envelope_s_vals[cc_val]}")
-        elif cc_num == "75":
-            cc_val = int(control_val)
-            self.set_gain_b(self.envelope_s_vals[cc_val]) # range is 0 - 1
-            self.log.info(f"Gain B: {self.envelope_s_vals[cc_val]}")
-        else:
-            self.log.info(f"Unhandled control change: CC {cc_num} with value {control_val} on channel {channel}")
+        self.log.info(f"Unhandled control change: CC {cc_num} with value {control_val} on channel {channel}")
 
 
 class Voice:
