@@ -37,6 +37,7 @@ class Synthesizer(threading.Thread):
         self.control_change_handler = self.cc_bank_a_handler
         self.set_gain_a(0.5)
         self.set_gain_b(0.5) # TODO should this be in setup signal chain?
+        self.mono_stacks = [[] for _ in range(num_voices)]
         
 
     def run(self):
@@ -95,11 +96,11 @@ class Synthesizer(threading.Thread):
             self.log.debug(f"Couldn't set Synthesizer mode with value {val}")
 
     def setup_signal_chain(self):
-        osc_a = signal.SawtoothWaveOscillator(self.sample_rate, self.frames_per_chunk)
+        osc_a = signal.SquareWaveOscillator(self.sample_rate, self.frames_per_chunk)
         osc_a_gain = signal.Gain(self.sample_rate, self.frames_per_chunk, signal.SignalType.WAVE, subcomponents=[osc_a], control_tag="gain_a")
         self.gain_a_ctrl_tag = osc_a_gain.control_tag
 
-        osc_b = signal.SinWaveOscillator(self.sample_rate, self.frames_per_chunk)
+        osc_b = signal.SawtoothWaveOscillator(self.sample_rate, self.frames_per_chunk)
         # osc_b.set_phase_degrees(45)
 
         osc_b_gain = signal.Gain(self.sample_rate, self.frames_per_chunk, signal.SignalType.WAVE, subcomponents=[osc_b], control_tag="gain_b")
@@ -153,8 +154,13 @@ class Synthesizer(threading.Thread):
         return note_id
     
     def note_on_mono(self, note: int, chan: int):
+        """
+        Handle note on for mono mode
+        Add the note to the mono stack and turn it on
+        """
         note_id = self.get_note_id(note, chan)
         # self.log.debug(f"[mono] Setting voice {chan} note_on with note {note}, id {note_id}")
+        self.mono_stacks[chan].append(note)
         freq = midi.frequencies[note]
         self.voices[chan].note_on(freq, note_id)
     
@@ -182,8 +188,36 @@ class Synthesizer(threading.Thread):
         else:
             self.note_on_poly(note, chan)
 
-
     def note_off(self, note: int, chan: int):
+        if self.mode == Synthesizer.Mode.MONO:
+            self.note_off_mono(note, chan)
+        else:
+            self.note_off_poly(note, chan)
+
+    def note_off_mono(self, note: int, chan: int):
+        """
+        Handle note off for mono mode
+        If the note that is being turned off is the same as the note that is currently playing
+        then turn it off and pop the note from the mono stack, then turn on the last note in the stack.
+        Otherwise, just remove the note from the mono stack.
+        """
+        note_id = self.get_note_id(note, chan)
+        if self.voices[chan].id == note_id:
+            popped = self.mono_stacks[chan].pop()
+            if popped != note:
+                self.log.debug(f"Note {note} was not the same as the note that was popped {popped}")
+            self.voices[chan].note_off()
+            if len(self.mono_stacks[chan]) > 0:
+                last_note = self.mono_stacks[chan].pop()
+                self.note_on_mono(last_note, chan)
+        else:
+            try:
+                self.mono_stacks[chan].remove(note)
+            except ValueError:
+                self.log.debug(f"Couldn't remove note {note} from mono stack")
+
+
+    def note_off_poly(self, note: int, chan: int):
         note_id = self.get_note_id(note, chan)
         for i in range(len(self.voices)):
             voice = self.voices[i]
