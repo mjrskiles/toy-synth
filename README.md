@@ -32,6 +32,42 @@ then
 
 brew install portaudio
 
+### Linux (Ubuntu 22.04)
+
+We'll need to install a few necessary packages onto the system first:
+
+```sudo apt install mosquitto```
+
+```sudo apt-get install pkg-config```
+
+```sudo apt-get install portaudio19-dev```
+
+```sudo apt-get install libjack-jackd2-dev libasound2-dev```
+
+clone the repository and cd into the project directory
+
+make sure you have pip3 installed:
+
+```which pip3```
+
+if it returns nothing, try:
+
+```sudo apt install python3-pip```
+
+then
+
+```pip3 install virtualenv```
+
+```python3 -m virtualenv venv```
+
+You should now have a folder called venv in the project directory. Let's active it:
+
+```source ./venv/bin/activate```
+
+install the dependencies into the virtual environment:
+
+```pip3 install -r requirements.txt```
+
 
 ## Running
 

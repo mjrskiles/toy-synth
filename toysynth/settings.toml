@@ -28,5 +28,6 @@ path = "toy/midi/player"
 player_port_name = "toy synth MIDI player"
 
 auto_attach = [
-    "MPK mini 3"
+    "MPK mini 3",
+    "MPK mini 3:MPK mini 3 MIDI 1 32:0",
 ]
